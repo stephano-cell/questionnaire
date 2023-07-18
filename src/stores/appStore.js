@@ -7,6 +7,9 @@ export const useAppStore = defineStore("appStore", {
     dynamicActions: [],
     auth: LocalStorage.getItem("auth") || null,
     usersData: [],
+    templateGroups: [], // Add this state property
+    templateQuestions: [], // Add this state property
+    template: [],
   }),
 
   getters: {
@@ -131,6 +134,52 @@ export const useAppStore = defineStore("appStore", {
       });
     },
 
+    //templates
+
+    postNewTemplate(templateData) {
+      console.log("Template Data:", templateData); // Add this line
+
+      return axios
+        .post("http://localhost:3000/template/new", templateData)
+        .then((response) => {
+          console.log("New template created with ID:", response.data.id);
+          return { id: response.data.id }; // Return an object with the templateId
+        })
+        .catch((error) => {
+          console.error("Error creating new template:", error);
+        });
+    },
+
+    postNewGroup(groupData) {
+      console.log("Group Data:", groupData); // Add this line
+
+      return axios
+        .post("http://localhost:3000/templateGroups/new", groupData)
+        .then((response) => {
+          console.log("New group created with ID:", response.data.id);
+          return response; // make sure to return the response
+        })
+        .catch((error) => {
+          console.error("Error creating new group:", error);
+          return Promise.reject(error); // make sure to return a rejected Promise in case of an error
+        });
+    },
+
+    postNewQuestion(questionData) {
+      console.log("Question Data:", questionData); // Add this line
+
+      return axios
+        .post("http://localhost:3000/templateQuestions/new", questionData)
+        .then((response) => {
+          console.log("New question created with ID:", response.data.id);
+          return response; // make sure to return the response
+        })
+        .catch((error) => {
+          console.error("Error creating new question:", error);
+          return Promise.reject(error); // make sure to return a rejected Promise in case of an error
+        });
+    },
+
     logout() {
       console.log("Logout");
       this.auth = null;
@@ -159,7 +208,6 @@ export const useAppStore = defineStore("appStore", {
           this.auth = null;
         });
     },
-
     installActions(actions) {
       this.dynamicActions = actions ?? [];
     },

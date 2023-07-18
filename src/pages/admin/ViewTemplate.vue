@@ -1,5 +1,17 @@
 <template>
   <div>
+    <q-input
+      filled
+      v-model="templateName"
+      label="Template Name"
+      class="q-ma-md"
+    />
+    <q-input
+      filled
+      v-model="templateDescription"
+      label="Template Description"
+      class="q-ma-md"
+    />
     <q-splitter v-model="splitterModel" style="height: 600px">
       <template v-slot:before>
         <div class="q-pa-md">
@@ -102,42 +114,6 @@
             v-model="newQuestionDescription"
             label="New Question Description"
             :dense="$q.screen.lt.md"
-            :toolbar="[
-              ['bold', 'italic', 'strike', 'underline'],
-
-              [
-                {
-                  label: $q.lang.editor.fontSize,
-                  icon: $q.iconSet.editor.fontSize,
-                  fixedLabel: true,
-                  fixedIcon: true,
-                  list: 'no-icons',
-                  options: [
-                    'size-1',
-                    'size-2',
-                    'size-3',
-                    'size-4',
-                    'size-5',
-                    'size-6',
-                    'size-7',
-                  ],
-                },
-              ],
-              [
-                {
-                  label: $q.lang.editor.align,
-                  icon: $q.iconSet.editor.align,
-                  fixedLabel: true,
-                  list: 'only-icons',
-                  options: ['left', 'center', 'right', 'justify'],
-                },
-                'unordered',
-                'ordered',
-              ],
-
-              ['undo', 'redo'],
-              ['fullscreen'],
-            ]"
           />
         </q-card-section>
         <q-card-actions align="right">
@@ -183,42 +159,6 @@
             v-model="questionDescription"
             label="Question Description"
             :dense="$q.screen.lt.md"
-            :toolbar="[
-              ['bold', 'italic', 'strike', 'underline'],
-
-              [
-                {
-                  label: $q.lang.editor.fontSize,
-                  icon: $q.iconSet.editor.fontSize,
-                  fixedLabel: true,
-                  fixedIcon: true,
-                  list: 'no-icons',
-                  options: [
-                    'size-1',
-                    'size-2',
-                    'size-3',
-                    'size-4',
-                    'size-5',
-                    'size-6',
-                    'size-7',
-                  ],
-                },
-              ],
-              [
-                {
-                  label: $q.lang.editor.align,
-                  icon: $q.iconSet.editor.align,
-                  fixedLabel: true,
-                  list: 'only-icons',
-                  options: ['left', 'center', 'right', 'justify'],
-                },
-                'unordered',
-                'ordered',
-              ],
-
-              ['undo', 'redo'],
-              ['fullscreen'],
-            ]"
           />
         </q-card-section>
         <q-card-actions align="right">
@@ -275,12 +215,24 @@ import { useRouter } from "vue-router";
 import { v4 } from "uuid";
 
 export default {
-  setup() {
+  props: {
+    mode: {
+      type: String,
+      required: true,
+    },
+    id: {
+      type: String,
+      required: false,
+    },
+  },
+  setup(props) {
     const splitterModel = ref(20);
-    const selected = ref("Food");
+    const selected = ref("");
+    const templateId = ref("");
     const store = useAppStore();
     const router = useRouter();
-
+    const templateName = ref("");
+    const templateDescription = ref("");
     const selectedNodeId = computed(() => {
       const node = flattenedNodes.value.find(
         (node) => node.id === selected.value
@@ -290,16 +242,6 @@ export default {
 
     const groups = ref([]);
     const tempGroups = ref([]); // Temporary copy of groups
-
-    // Load groups from the store when the component is mounted
-    onMounted(async () => {
-      await store.fetchGroups();
-      const storedGroups = store.groupsData;
-      if (storedGroups) {
-        groups.value = storedGroups;
-        tempGroups.value = JSON.parse(JSON.stringify(storedGroups)); // Make a deep copy of groups
-      }
-    });
 
     const editSelected = () => {
       const group = tempGroups.value.find((g) => g.id === selected.value);
@@ -337,15 +279,6 @@ export default {
     const questionTitle = ref("");
     const questionDescription = ref("");
     const selectedGroup = ref("");
-
-    watch(
-      () => store.groupsData,
-      (newGroupsData) => {
-        groups.value = newGroupsData;
-        tempGroups.value = JSON.parse(JSON.stringify(newGroupsData)); // Make a deep copy of groups
-      },
-      { immediate: true } // Run the watcher immediately when the component is created
-    );
 
     const showEditGroupDialog = ref(false);
     const selectedGroupToEdit = ref("");
@@ -396,6 +329,7 @@ export default {
     });
     const addGroup = () => {
       // Add a new group to the temporary data
+
       tempGroups.value.push({
         id: v4(), // Add a UUID to the group
         label: groupName.value,
@@ -490,43 +424,83 @@ export default {
         }
       });
     };
-    store.installActions([
-      {
-        label: "Save",
-        callback: () => {
-          // Copy the temporary data back to groups and save it to the store
-          groups.value = JSON.parse(JSON.stringify(tempGroups.value));
 
-          // Save all groups to the database
-          groups.value.forEach((group) => {
-            // If the group is new (i.e., it doesn't exist in the store), create it
-            if (!store.groupsData.find((g) => g.id === group.id)) {
-              store.createGroup(group);
-            }
-            // Otherwise, update it
-            else {
-              store.updateGroup(group.id, group);
-            }
-          });
+    // In ViewTemplate.vue
+    if (props.mode === "new") {
+      store.installActions([
+        {
+          label: "Create",
+          callback: async () => {
+            // Create a new template
+            const templateData = {
+              name: templateName.value,
+              description: templateDescription.value,
+            };
 
-          // Delete all groups in the store that don't exist in groups.value
-          store.groupsData.forEach((group) => {
-            if (!groups.value.find((g) => g.id === group.id)) {
-              store.deleteGroup(group.id);
-            }
-          });
+            try {
+              // Create a new template and get its ID
+              const { id: templateId } = await store.postNewTemplate(
+                templateData
+              );
 
-          router.back();
+              // Create an array to store the promises for group and question creation
+              const promises = [];
+
+              // Create groups and questions
+              tempGroups.value.forEach((group) => {
+                const groupData = {
+                  groupName: group.label,
+                  templateId: templateId,
+                };
+
+                // Create a promise for group creation
+                const createGroupPromise = store
+                  .postNewGroup(groupData)
+                  .then((groupResponse) => {
+                    const groupId = groupResponse.data.id;
+
+                    // Create questions for the group
+                    group.children.forEach((question) => {
+                      // Create a new question
+                      const questionData = {
+                        questionTitle: question.label,
+                        questionDescription: question.description,
+                        groupId: groupId,
+                      };
+
+                      // Create a promise for question creation
+                      const createQuestionPromise =
+                        store.postNewQuestion(questionData);
+                      promises.push(createQuestionPromise);
+                    });
+                  });
+
+                promises.push(createGroupPromise);
+              });
+
+              // Wait for all group and question creation promises to resolve
+              await Promise.all(promises);
+
+              // All groups and questions are created, navigate back
+              router.back();
+            } catch (error) {
+              console.error(
+                "Error creating template, groups, and questions:",
+                error
+              );
+            }
+          },
         },
-      },
-    ]);
-
+      ]);
+    } else {
+      return alert("Invalid mode");
+    }
     return {
       splitterModel,
       questionTitle,
       selectedGroup,
       selected,
-      groups: tempGroups, // Use tempGroups in your template
+      groups: tempGroups,
       showCreateGroupDialog,
       showCreateQuestionDialog,
       groupName,
@@ -550,10 +524,12 @@ export default {
       showDeleteQuestionDialog,
       selectedQuestionToDelete,
       deleteGroup,
-
+      templateName,
+      templateDescription,
       deleteQuestion,
       editSelected,
       selectedNodeId,
+      templateId,
     };
   },
 };

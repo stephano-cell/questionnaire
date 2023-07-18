@@ -1,417 +1,486 @@
 <template>
   <div>
-    <q-card bordered>
-      <q-card-section>
-        <div class="text-h6">{{ projectName }}</div>
-      </q-card-section>
-      <q-separator />
-      <q-card-section class="row items-center q-col-gutter-md">
-        <div class="col">Total Questions: {{ totalQuestions }}</div>
-        <div class="col">Client to Answer: {{ clientToAnswer }}</div>
-        <div class="col">Questions for Reviewer: {{ adminToReview }}</div>
-        <div class="col">{{ status }}% Completed</div>
-      </q-card-section>
-    </q-card>
-  </div>
-  <div>
-    <q-splitter v-model="splitterModel" style="height: 800px">
+    <q-input
+      filled
+      v-model="templateName"
+      label="Template Name"
+      class="q-ma-md"
+    />
+    <q-input
+      filled
+      v-model="templateDescription"
+      label="Template Description"
+      class="q-ma-md"
+    />
+    <q-splitter v-model="splitterModel" style="height: 600px">
       <template v-slot:before>
         <div class="q-pa-md">
+          <q-btn
+            label="Create Group"
+            color="primary"
+            @click="showCreateGroupDialog = true"
+            class="q-ma-md q-mb-ml"
+          />
+
+          <q-btn
+            label="Create Question"
+            color="secondary"
+            @click="showCreateQuestionDialog = true"
+            class="q-ma-md q-mb-ml"
+          />
           <q-tree
             :nodes="groups"
-            node-key="label"
+            node-key="id"
             selected-color="primary"
             v-model:selected="selected"
             default-expand-all
+            @dblclick="editSelected"
           />
         </div>
       </template>
 
       <template v-slot:after>
         <q-tab-panels
-          v-model="selected"
+          v-model="selectedNodeId"
           animated
           transition-prev="jump-up"
           transition-next="jump-up"
         >
           <q-tab-panel
             v-for="node in flattenedNodes"
-            :key="node.label"
-            :name="node.label"
+            :key="node.id"
+            :name="node.id"
           >
             <div class="text-h4 q-mb-md">{{ node.label }}</div>
             <p v-html="node.description"></p>
-
-            <div class="q-mt-md">
-              <div class="text-subtitle2 q-mb-xs">Client Answer</div>
-              <q-toolbar>
-                <q-btn
-                  flat
-                  round
-                  dense
-                  size="sm"
-                  icon="table_chart"
-                  @click="dialog = true"
-                />
-              </q-toolbar>
-              <q-editor
-                v-model="clientResponse"
-                class="q-mb-md"
-                :dense="$q.screen.lt.md"
-                :toolbar="[
-                  ['bold', 'italic', 'strike', 'underline'],
-
-                  [
-                    {
-                      label: $q.lang.editor.formatting,
-                      icon: $q.iconSet.editor.formatting,
-                      list: 'no-icons',
-                      options: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-                    },
-                    {
-                      label: $q.lang.editor.fontSize,
-                      icon: $q.iconSet.editor.fontSize,
-                      fixedLabel: true,
-                      fixedIcon: true,
-                      list: 'no-icons',
-                      options: [
-                        'size-1',
-                        'size-2',
-                        'size-3',
-                        'size-4',
-                        'size-5',
-                        'size-6',
-                        'size-7',
-                      ],
-                    },
-                    {
-                      label: $q.lang.editor.defaultFont,
-                      icon: $q.iconSet.editor.font,
-                      fixedIcon: true,
-                      list: 'no-icons',
-                      options: [
-                        'default_font',
-                        'arial',
-                        'arial_black',
-                        'comic_sans',
-                        'courier_new',
-                        'impact',
-                        'lucida_grande',
-                        'times_new_roman',
-                        'verdana',
-                      ],
-                    },
-                    'removeFormat',
-                  ],
-                  [
-                    {
-                      label: $q.lang.editor.align,
-                      icon: $q.iconSet.editor.align,
-                      fixedLabel: true,
-                      list: 'only-icons',
-                      options: ['left', 'center', 'right', 'justify'],
-                    },
-                    'unordered',
-                    'ordered',
-                  ],
-
-                  ['undo', 'redo'],
-                  ['fullscreen'],
-                ]"
-                :fonts="{
-                  arial: 'Arial',
-                  arial_black: 'Arial Black',
-                  comic_sans: 'Comic Sans MS',
-                  courier_new: 'Courier New',
-                  impact: 'Impact',
-                  lucida_grande: 'Lucida Grande',
-                  times_new_roman: 'Times New Roman',
-                  verdana: 'Verdana',
-                }"
-              >
-              </q-editor>
-
-              <q-dialog v-model="dialog">
-                <q-card>
-                  <q-card-section>
-                    <div class="text-h6">Insert Table</div>
-                  </q-card-section>
-                  <q-card-section>
-                    <q-input
-                      filled
-                      v-model="tableRows"
-                      type="number"
-                      label="Rows"
-                    />
-                    <q-input
-                      filled
-                      v-model="tableCols"
-                      type="number"
-                      label="Columns"
-                    />
-                  </q-card-section>
-                  <q-card-actions align="right">
-                    <q-btn flat label="Cancel" color="primary" v-close-popup />
-                    <q-btn
-                      flat
-                      label="Insert"
-                      color="primary"
-                      @click="insertTable"
-                    />
-                  </q-card-actions>
-                </q-card>
-              </q-dialog>
-
-              <q-select
-                v-model="selectedClientResponse"
-                :options="clientResponses"
-                label="Client"
-                style="width: 200px"
-                class="q-mb-md"
-                @update:model-value="updateClientResponse"
-              />
-
-              <div class="text-subtitle2 q-mb-xs">Reviewer Comment</div>
-              <br />
-              <div v-html="reviewerResponse"></div>
-
-              <q-select
-                v-model="selectedReviewerResponse"
-                :options="reviewerResponses"
-                label="Reviewer"
-                style="width: 200px"
-                class="q-mb-md"
-                @update:model-value="updateReviewerResponse"
-              />
-            </div>
-
-            <div class="q-mt-md">
-              <q-btn
-                label="Submit"
-                color="primary"
-                @click="submit"
-                class="q-mr-md"
-              />
-              <q-btn label="Next" color="secondary" @click="nextQuestion" />
-            </div>
           </q-tab-panel>
         </q-tab-panels>
       </template>
     </q-splitter>
+    <q-btn
+      label="Delete Group"
+      color="orange"
+      @click="showDeleteGroupDialog = true"
+      class="q-ma-md q-mb-ml"
+    />
+    <q-btn
+      label="Delete Question"
+      color="orange"
+      @click="showDeleteQuestionDialog = true"
+      class="q-ma-md q-mb-ml"
+    />
+    <br />
+
+    <q-dialog v-model="showEditGroupDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <div class="text-h6">Edit Group Name</div>
+        </q-card-section>
+        <q-card-section>
+          <q-select
+            filled
+            v-model="selectedGroupToEdit"
+            :options="groupOptions"
+            label="Select a group"
+          />
+          <q-input filled v-model="newGroupName" label="New Group Name" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Save" color="primary" @click="editGroup" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="showEditQuestionDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <div class="text-h6">Edit Question</div>
+        </q-card-section>
+        <q-card-section>
+          <q-select
+            filled
+            v-model="selectedQuestionToEdit"
+            :options="questionOptions"
+            label="Select a question"
+          />
+          <q-input
+            filled
+            v-model="newQuestionTitle"
+            label="New Question Title"
+          />
+          <q-editor
+            filled
+            v-model="newQuestionDescription"
+            label="New Question Description"
+            :dense="$q.screen.lt.md"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Save" color="primary" @click="editQuestion" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="showCreateGroupDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <div class="text-h6">Create a new group</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input filled v-model="groupName" label="Group Name" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Create" color="primary" @click="addGroup" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="showCreateQuestionDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <div class="text-h6">Create a new question</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input filled v-model="questionTitle" label="Question Title" />
+          <q-select
+            filled
+            v-model="selectedGroup"
+            :options="groupOptions"
+            option-value="value"
+            option-label="label"
+            label="Select a group"
+          />
+
+          <q-editor
+            filled
+            v-model="questionDescription"
+            label="Question Description"
+            :dense="$q.screen.lt.md"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Create" color="primary" @click="addQuestion" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <q-dialog v-model="showDeleteGroupDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <div class="text-h6">Delete Group</div>
+        </q-card-section>
+        <q-card-section>
+          <q-select
+            filled
+            v-model="selectedGroupToDelete"
+            :options="groupOptions"
+            label="Select a group"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Delete" color="negative" @click="deleteGroup" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <!-- ... -->
+    <q-dialog v-model="showDeleteQuestionDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <div class="text-h6">Delete Question</div>
+        </q-card-section>
+        <q-card-section>
+          <q-select
+            filled
+            v-model="selectedQuestionToDelete"
+            :options="questionOptions"
+            label="Select a question"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Delete" color="negative" @click="deleteQuestion" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
-
 <script>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { useAppStore } from "../../stores/appStore";
+import { useRouter } from "vue-router";
+import { v4 } from "uuid";
 
 export default {
-  setup() {
-    const dialog = ref(false);
-    const tableRows = ref(0);
-    const tableCols = ref(0);
-
+  props: {
+    mode: {
+      type: String,
+      required: true,
+    },
+    id: {
+      type: String,
+      required: false,
+    },
+  },
+  setup(props) {
     const splitterModel = ref(20);
-    const selected = ref(null);
-    const clientResponse = ref("");
-    const insertTable = () => {
-      let table = "<table>";
-      for (let i = 0; i < tableRows.value; i++) {
-        table += "<tr>";
-        for (let j = 0; j < tableCols.value; j++) {
-          table += "<td>&nbsp;</td>"; // Add a non-breaking space inside the cell to ensure it has content
+    const selected = ref();
+    const store = useAppStore();
+    const router = useRouter();
+    const templateName = ref("");
+    const templateDescription = ref("");
+
+    const selectedNodeId = computed(() => {
+      const node = flattenedNodes.value.find(
+        (node) => node.id === selected.value
+      );
+      return node ? node.id : null;
+    });
+
+    const groups = ref([]);
+    const tempGroups = ref([]);
+
+    const editSelected = () => {
+      const group = tempGroups.value.find((g) => g.id === selected.value);
+      if (group) {
+        // The selected node is a group
+        selectedGroupToEdit.value = {
+          label: group.label,
+          value: group.id,
+        };
+        showEditGroupDialog.value = true;
+      } else {
+        // The selected node is a question
+        let question = null;
+        tempGroups.value.forEach((group) => {
+          if (group.children) {
+            const found = group.children.find((q) => q.id === selected.value);
+            if (found) {
+              question = found;
+            }
+          }
+        });
+        if (question) {
+          selectedQuestionToEdit.value = {
+            label: question.label,
+            value: question.id,
+          };
+          showEditQuestionDialog.value = true;
         }
-        table += "</tr>";
       }
-      table += "</table>";
-      clientResponse.value += table;
-      dialog.value = false;
     };
-    const reviewerResponse = ref("");
 
-    const clientResponses = ref([
-      {
-        name: "Client 1",
-        date: "2023-05-18",
-        response: "Client Response 1",
-        label: "Client 1 - 2023-05-10",
-      },
-      {
-        name: "Client 2",
-        date: "2023-05-19",
-        response: "Client Response 2",
-        label: "Client 2 - 2023-05-08",
-      },
-    ]);
+    const showCreateGroupDialog = ref(false);
+    const showCreateQuestionDialog = ref(false);
+    const groupName = ref("");
+    const questionTitle = ref("");
+    const questionDescription = ref("");
+    const selectedGroup = ref("");
 
-    const reviewerResponses = ref([
-      {
-        name: "Reviewer 1",
-        date: "2023-05-20",
-        response: "Reviewer Comment 1",
-        label: "Reviewer 1 - 2023-05-10",
-      },
-      {
-        name: "Reviewer 2",
-        date: "2023-05-21",
-        response: "Reviewer Comment 2",
-        label: "Reviewer 2 - 2023-05-09",
-      },
-    ]);
-
-    const selectedClientResponse = ref(
-      clientResponses.value[clientResponses.value.length - 1]
-    );
-    const selectedReviewerResponse = ref(
-      reviewerResponses.value[reviewerResponses.value.length - 1]
-    );
-
-    const groups = ref([
-      {
-        label: "Group 1",
-        children: [
-          {
-            label: "Question 1",
-            description: "Description for Question 1",
-          },
-          {
-            label: "Question 2",
-            description: "Description for Question 2",
-          },
-        ],
-      },
-      {
-        label: "Group 2",
-        children: [
-          {
-            label: "Question 3",
-            description: "Description for Question 3",
-          },
-        ],
-      },
-    ]);
+    const showEditGroupDialog = ref(false);
+    const selectedGroupToEdit = ref("");
+    const newGroupName = ref("");
+    const showEditQuestionDialog = ref(false);
+    const selectedQuestionToEdit = ref("");
+    const newQuestionTitle = ref("");
+    const newQuestionDescription = ref("");
+    const showDeleteGroupDialog = ref(false);
+    const selectedGroupToDelete = ref("");
+    const showDeleteQuestionDialog = ref(false);
+    const selectedQuestionToDelete = ref("");
 
     const flattenedNodes = computed(() => {
-      const nodes = [];
-      const traverse = (node) => {
-        if (node.children) {
-          node.children.forEach(traverse);
+      // Flatten the tree nodes for the q-tab-panels
+      let nodes = [];
+      tempGroups.value.forEach((group) => {
+        nodes.push(group);
+        if (group.children) {
+          nodes = nodes.concat(group.children);
         }
-        if (node.description) {
-          nodes.push(node);
-        }
-      };
-      groups.value.forEach(traverse);
+      });
       return nodes;
     });
 
-    const submit = () => {
-      const clientNameDate = `Client X - ${
-        new Date().toISOString().split("T")[0]
-      }`;
+    const groupOptions = computed(() => {
+      // Map the groups to an array of options for the q-select
+      return tempGroups.value.map((group) => ({
+        label: group.label, // This will be displayed in the dropdown
+        value: group.id, // Use the group's ID for comparison
+      }));
+    });
 
-      clientResponses.value.push({
-        name: "Client X",
-        date: new Date().toISOString().split("T")[0],
-        response: clientResponse.value,
-        label: clientNameDate,
+    const questionOptions = computed(() => {
+      // Map the questions to an array of options for the q-select
+      let options = [];
+      tempGroups.value.forEach((group) => {
+        if (group.children) {
+          options = options.concat(
+            group.children.map((child) => ({
+              label: child.label,
+              value: child.id, // Use the question's ID for comparison
+            }))
+          );
+        }
       });
-
-      clientResponse.value = "";
-
-      selectedClientResponse.value =
-        clientResponses.value[clientResponses.value.length - 1];
+      return options;
+    });
+    const addGroup = () => {
+      // Add a new group to the temporary data
+      tempGroups.value.push({
+        id: v4(), // Add a UUID to the group
+        label: groupName.value,
+        children: [],
+      });
+      tempGroups.value.sort((a, b) => a.label.localeCompare(b.label)); // Sort groups alphabetically
+      groupName.value = "";
+      showCreateGroupDialog.value = false;
     };
-
-    const nextQuestion = () => {
-      const currentIndex = flattenedNodes.value.findIndex(
-        (node) => node.label === selected.value
+    const addQuestion = () => {
+      // Add a new question to the selected group
+      const group = tempGroups.value.find(
+        (g) => g.id === selectedGroup.value.value
       );
-      const nextIndex = currentIndex + 1;
-      if (nextIndex < flattenedNodes.value.length) {
-        selected.value = flattenedNodes.value[nextIndex].label;
+      if (group) {
+        group.children.push({
+          id: v4(), // Add a UUID to the question
+          label: questionTitle.value,
+          description: questionDescription.value,
+        });
+        group.children.sort((a, b) => a.label.localeCompare(b.label)); // Sort questions alphabetically
+        // Update the group label to include the new count
+
+        questionTitle.value = "";
+        questionDescription.value = "";
+        selectedGroup.value = "";
+        showCreateQuestionDialog.value = false;
+      }
+    };
+    const editGroup = () => {
+      // Edit the selected group
+      const group = tempGroups.value.find(
+        (g) => g.id === selectedGroupToEdit.value.value
+      );
+
+      if (group) {
+        group.label = newGroupName.value;
+        newGroupName.value = "";
+        selectedGroupToEdit.value = "";
+        showEditGroupDialog.value = false;
       }
     };
 
-    const updateClientResponse = (selectedObject) => {
-      clientResponse.value = selectedObject ? selectedObject.response : "";
+    const editQuestion = () => {
+      // Edit the selected question
+      let question = null;
+      tempGroups.value.forEach((group) => {
+        if (group.children) {
+          const found = group.children.find(
+            (q) => q.id === selectedQuestionToEdit.value.value
+          );
+          if (found) {
+            question = found;
+          }
+        }
+      });
+      if (question) {
+        question.label = newQuestionTitle.value;
+        question.description = newQuestionDescription.value;
+        newQuestionTitle.value = "";
+        newQuestionDescription.value = "";
+        selectedQuestionToEdit.value = "";
+        showEditQuestionDialog.value = false;
+      }
     };
 
-    const updateReviewerResponse = (selectedObject) => {
-      reviewerResponse.value = selectedObject ? selectedObject.response : "";
+    const deleteGroup = () => {
+      // Delete the selected group
+      const index = tempGroups.value.findIndex(
+        (g) => g.id === selectedGroupToDelete.value.value
+      );
+      if (index !== -1) {
+        tempGroups.value.splice(index, 1);
+        selectedGroupToDelete.value = "";
+        showDeleteGroupDialog.value = false;
+      }
     };
 
-    onMounted(() => {
-      clientResponse.value = selectedClientResponse.value.response;
-      reviewerResponse.value = selectedReviewerResponse.value.response;
-    });
+    const deleteQuestion = () => {
+      // Delete the selected question
+      tempGroups.value.forEach((group) => {
+        if (group.children) {
+          const index = group.children.findIndex(
+            (q) => q.id === selectedQuestionToDelete.value.value
+          );
+          if (index !== -1) {
+            group.children.splice(index, 1);
+            // Update the group label to include the new count
+            selectedQuestionToDelete.value = "";
+            showDeleteQuestionDialog.value = false;
+          }
+        }
+      });
+    };
 
-    const projectName = ref("Test 1");
-    const totalQuestions = ref(300);
-    const clientToAnswer = ref(150);
-    const adminToReview = ref(50);
-    const status = ref(50); // You can calculate this based on your data
+    if (props.mode === "new") {
+      store.installActions([
+        {
+          label: "Create",
+          callback: () => {
+            router.back();
+          },
+        },
+      ]);
+    } else if (props.mode === "edit") {
+      store.installActions([
+        {
+          label: "Save",
+          callback: () => {
+            router.back();
+          },
+        },
+      ]);
+    } else {
+      return alert("Invalid mode");
+    }
 
     return {
       splitterModel,
+      questionTitle,
+      selectedGroup,
       selected,
-      groups,
+      groups: tempGroups, // Use tempGroups in your template
+      showCreateGroupDialog,
+      showCreateQuestionDialog,
+      groupName,
+      addGroup,
+      addQuestion,
       flattenedNodes,
-      clientResponse,
-      reviewerResponse,
-      clientResponses,
-      reviewerResponses,
-      selectedClientResponse,
-      selectedReviewerResponse,
-      submit,
-      nextQuestion,
-      updateClientResponse,
-      updateReviewerResponse,
-
-      projectName,
-      totalQuestions,
-      clientToAnswer,
-      adminToReview,
-      status,
-      insertTable,
-      dialog, // add this
-      tableRows, // add this
-      tableCols, // add this
-      toolbar, // add this
+      groupOptions,
+      questionDescription,
+      showEditGroupDialog,
+      selectedGroupToEdit,
+      newGroupName,
+      editGroup,
+      showEditQuestionDialog,
+      selectedQuestionToEdit,
+      newQuestionTitle,
+      newQuestionDescription,
+      editQuestion,
+      questionOptions,
+      showDeleteGroupDialog,
+      selectedGroupToDelete,
+      showDeleteQuestionDialog,
+      selectedQuestionToDelete,
+      deleteGroup,
+      templateName,
+      templateDescription,
+      deleteQuestion,
+      editSelected,
+      selectedNodeId,
     };
   },
 };
 </script>
-<style scoped>
-/deep/ .q-editor__content table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-/deep/ .q-editor__content table td {
-  border: 1px solid black;
-  padding: 10px;
-}
-</style>
-
-*/ :toolbar="[ ['bold', 'italic', 'strike', 'underline'], [ { label:
-$q.lang.editor.formatting, icon: $q.iconSet.editor.formatting, list: 'no-icons',
-options: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'], }, { label:
-$q.lang.editor.fontSize, icon: $q.iconSet.editor.fontSize, fixedLabel: true,
-fixedIcon: true, list: 'no-icons', options: [ 'size-1', 'size-2', 'size-3',
-'size-4', 'size-5', 'size-6', 'size-7', ], }, { label:
-$q.lang.editor.defaultFont, icon: $q.iconSet.editor.font, fixedIcon: true, list:
-'no-icons', options: [ 'default_font', 'arial', 'arial_black', 'comic_sans',
-'courier_new', 'impact', 'lucida_grande', 'times_new_roman', 'verdana', ], },
-'removeFormat', ], [ { label: $q.lang.editor.align, icon:
-$q.iconSet.editor.align, fixedLabel: true, list: 'only-icons', options: ['left',
-'center', 'right', 'justify'], }, 'unordered', 'ordered', ], ['undo', 'redo'],
-['fullscreen'], ]" :fonts="{ arial: 'Arial', arial_black: 'Arial Black',
-comic_sans: 'Comic Sans MS', courier_new: 'Courier New', impact: 'Impact',
-lucida_grande: 'Lucida Grande', times_new_roman: 'Times New Roman', verdana:
-'Verdana', }" :toolbar="[ ['bold', 'italic', 'strike', 'underline'], [ { label:
-$q.lang.editor.fontSize, icon: $q.iconSet.editor.fontSize, fixedLabel: true,
-fixedIcon: true, list: 'no-icons', options: [ 'size-1', 'size-2', 'size-3',
-'size-4', 'size-5', 'size-6', 'size-7', ], }, ], [ { label:
-$q.lang.editor.align, icon: $q.iconSet.editor.align, fixedLabel: true, list:
-'only-icons', options: ['left', 'center', 'right', 'justify'], }, 'unordered',
-'ordered', ], ['undo', 'redo'], ['fullscreen'], ]"

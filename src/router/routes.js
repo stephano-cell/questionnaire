@@ -71,8 +71,19 @@ const routes = [
       },
 
       {
-        path: "question/manage",
+        path: "template/new",
         component: () => import("pages/admin/ViewTemplate.vue"),
+        props: () => ({
+          mode: "new",
+        }),
+      },
+      {
+        path: "template/edit/:id",
+        component: () => import("pages/admin/ViewTemplate.vue"),
+        props: (route) => ({
+          mode: "edit",
+          id: route.params.id,
+        }),
       },
     ],
   },
