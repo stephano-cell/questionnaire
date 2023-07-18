@@ -69,7 +69,10 @@ const routes = [
           id: route.params.id,
         }),
       },
-
+      {
+        path: "template/list",
+        component: () => import("pages/admin/ListTemplates.vue"),
+      },
       {
         path: "template/new",
         component: () => import("pages/admin/ViewTemplate.vue"),

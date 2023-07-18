@@ -49,6 +49,39 @@ router.post("/template/new", (req, res) => {
   );
 });
 
+//get
+router.get("/template/list", (req, res) => {
+  db.all("SELECT * FROM template", [], (err, rows) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    return res.status(200).json(rows);
+  });
+});
+// Get a single template by ID
+router.get("/template/:id", (req, res) => {
+  db.get("SELECT * FROM template WHERE id = ?", [req.params.id], (err, row) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    return res.status(200).json(row);
+  });
+});
+// Update a template by ID
+router.put("/template/:id", (req, res) => {
+  const { name, description } = req.body;
+
+  db.run(
+    `UPDATE template SET name = ?, description = ? WHERE id = ?`,
+    [name, description, req.params.id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json({ id: req.params.id });
+    }
+  );
+});
 //create templateGroups table
 db.run(
   `
@@ -80,6 +113,34 @@ router.post("/templateGroups/new", (req, res) => {
         return res.status(400).json({ error: err.message });
       }
       return res.status(201).json({ id: groupId });
+    }
+  );
+});
+// Get all groups for a specific template
+router.get("/templateGroups/:templateId", (req, res) => {
+  db.all(
+    "SELECT * FROM templateGroups WHERE templateId = ?",
+    [req.params.templateId],
+    (err, rows) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json(rows);
+    }
+  );
+});
+// Update a group by ID
+router.put("/templateGroups/:id", (req, res) => {
+  const { groupName } = req.body;
+
+  db.run(
+    `UPDATE templateGroups SET groupName = ? WHERE id = ?`,
+    [groupName, req.params.id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json({ id: req.params.id });
     }
   );
 });
@@ -116,6 +177,34 @@ router.post("/templateQuestions/new", (req, res) => {
         return res.status(400).json({ error: err.message });
       }
       return res.status(201).json({ id: questionId });
+    }
+  );
+});
+// Get all questions for a specific group
+router.get("/templateQuestions/:groupId", (req, res) => {
+  db.all(
+    "SELECT * FROM templateQuestions WHERE groupId = ?",
+    [req.params.groupId],
+    (err, rows) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json(rows);
+    }
+  );
+});
+// Update a question by ID
+router.put("/templateQuestions/:id", (req, res) => {
+  const { questionTitle, questionDescription } = req.body;
+
+  db.run(
+    `UPDATE templateQuestions SET questionTitle = ?, questionDescription = ? WHERE id = ?`,
+    [questionTitle, questionDescription, req.params.id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json({ id: req.params.id });
     }
   );
 });

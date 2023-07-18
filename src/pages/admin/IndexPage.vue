@@ -24,7 +24,7 @@
           color="blue"
           name="quiz"
           size="20em"
-          @click="adminGroupsList"
+          @click="adminTemplateList"
         />
         Template
       </q-tab>
@@ -48,13 +48,13 @@ export default defineComponent({
     const adminProjectsList = () => {
       router.push("/admin/project/list");
     };
-    const adminGroupsList = () => {
-      router.push("/admin/question/manage");
+    const adminTemplateList = () => {
+      router.push("/admin/template/list");
     };
     return {
       adminUserList,
       adminProjectsList,
-      adminGroupsList,
+      adminTemplateList,
     };
   },
 });

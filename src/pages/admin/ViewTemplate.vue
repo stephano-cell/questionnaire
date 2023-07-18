@@ -240,7 +240,6 @@ export default {
       return node ? node.id : null;
     });
 
-    const groups = ref([]);
     const tempGroups = ref([]); // Temporary copy of groups
 
     const editSelected = () => {
@@ -489,6 +488,63 @@ export default {
                 error
               );
             }
+          },
+        },
+      ]);
+    } else if (props.mode === "edit") {
+      onMounted(async () => {
+        // Fetch template
+        const template = await store.fetchTemplate(props.id);
+        templateName.value = template.name;
+        templateDescription.value = template.description;
+
+        // Fetch template groups
+        const groups = await store.fetchTemplateGroups(props.id);
+        tempGroups.value = groups.map((group) => ({
+          id: group.id,
+          label: group.groupName,
+          children: [],
+        }));
+
+        // Fetch template questions
+        for (const group of tempGroups.value) {
+          const questions = await store.fetchTemplateQuestions(group.id);
+          group.children = questions.map((question) => ({
+            id: question.id,
+            label: question.questionTitle,
+            description: question.questionDescription,
+          }));
+        }
+      });
+      store.installActions([
+        {
+          label: "Save",
+          callback: async () => {
+            // Update template
+            const templateData = {
+              name: templateName.value,
+              description: templateDescription.value,
+            };
+            await store.updateTemplate(props.id, templateData);
+
+            // Update groups and questions
+            for (const group of tempGroups.value) {
+              const groupData = {
+                groupName: group.label,
+              };
+              await store.updateGroup(group.id, groupData);
+
+              for (const question of group.children) {
+                const questionData = {
+                  questionTitle: question.label,
+                  questionDescription: question.description,
+                };
+                await store.updateQuestion(question.id, questionData);
+              }
+            }
+
+            // All groups and questions are updated, navigate back
+            router.back();
           },
         },
       ]);

@@ -136,6 +136,18 @@ export const useAppStore = defineStore("appStore", {
 
     //templates
 
+    fetchTemplates() {
+      axios
+        .get("http://localhost:3000/template/list")
+        .then((response) => {
+          console.log("Fetched templates:", response.data); // Add this line
+          this.template = response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching templates:", error);
+        });
+    },
+
     postNewTemplate(templateData) {
       console.log("Template Data:", templateData); // Add this line
 
@@ -143,6 +155,7 @@ export const useAppStore = defineStore("appStore", {
         .post("http://localhost:3000/template/new", templateData)
         .then((response) => {
           console.log("New template created with ID:", response.data.id);
+          this.fetchTemplates(); // Fetch the templates again
           return { id: response.data.id }; // Return an object with the templateId
         })
         .catch((error) => {
@@ -177,6 +190,76 @@ export const useAppStore = defineStore("appStore", {
         .catch((error) => {
           console.error("Error creating new question:", error);
           return Promise.reject(error); // make sure to return a rejected Promise in case of an error
+        });
+    },
+
+    //editTemplate
+    editTemplate(router, info) {
+      router.push(`/admin/template/edit/${info.id}`);
+    },
+    async fetchTemplate(id) {
+      return axios
+        .get(`http://localhost:3000/template/${id}`)
+        .then((response) => {
+          return response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching template:", error);
+        });
+    },
+
+    async fetchTemplateGroups(templateId) {
+      return axios
+        .get(`http://localhost:3000/templateGroups/${templateId}`)
+        .then((response) => {
+          return response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching template groups:", error);
+        });
+    },
+
+    async fetchTemplateQuestions(groupId) {
+      return axios
+        .get(`http://localhost:3000/templateQuestions/${groupId}`)
+        .then((response) => {
+          return response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching template questions:", error);
+        });
+    },
+
+    async updateTemplate(id, data) {
+      await axios
+        .put(`http://localhost:3000/template/${id}`, data)
+        .then((response) => {
+          console.log("Template updated with ID:", response.data.id);
+        })
+        .catch((error) => {
+          console.error("Error updating template:", error);
+        });
+    },
+
+    async updateGroup(id, data) {
+      await axios
+        .put(`http://localhost:3000/templateGroups/${id}`, data)
+        .then((response) => {
+          console.log("Group updated with ID:", response.data.id);
+        })
+        .catch((error) => {
+          console.error("Error updating group:", error);
+        });
+    },
+
+    async updateQuestion(id, data) {
+      await axios
+        .put(`http://localhost:3000/templateQuestions/${id}`, data)
+        .then((response) => {
+          console.log("Question updated with ID:", response.data.id);
+        })
+        .catch((error) => {
+          console.error("Error updating question:", error);
         });
     },
 
