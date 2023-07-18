@@ -7,8 +7,6 @@ export const useAppStore = defineStore("appStore", {
     dynamicActions: [],
     auth: LocalStorage.getItem("auth") || null,
     usersData: [],
-    groupsData: [],
-    projectData: [],
   }),
 
   getters: {
@@ -47,14 +45,6 @@ export const useAppStore = defineStore("appStore", {
         .get("http://localhost:3000/users")
         .then((response) => {
           this.usersData = response.data;
-
-          this.usersData.forEach((user) => {
-            axios
-              .get(`http://localhost:3000/users/${user.id}/projects`)
-              .then((response) => {
-                user.projects = response.data;
-              });
-          });
         })
         .catch((error) => {
           console.error("Error fetching users:", error);
@@ -101,108 +91,6 @@ export const useAppStore = defineStore("appStore", {
         });
     },
 
-    insertNewProject(newProject) {
-      axios
-        .post("http://localhost:3000/projects", newProject)
-        .then((response) => {
-          console.log("Project created with ID:", response.data.id);
-          this.projectData.push(response.data);
-        })
-        .catch((error) => {
-          console.error("Error creating project:", error);
-        });
-    },
-
-    fetchGroups() {
-      return axios
-        .get("http://localhost:3000/groups")
-        .then((response) => {
-          this.groupsData = response.data.map((group) => {
-            return {
-              ...group,
-              children: JSON.parse(group.children),
-            };
-          });
-        })
-        .catch((error) => {
-          console.error("Error fetching groups:", error);
-        });
-    },
-
-    saveGroups(groups) {
-      axios
-        .post("http://localhost:3000/groups", {
-          ...groups,
-          children: JSON.stringify(groups.children),
-        })
-        .then((response) => {
-          this.groupsData = response.data;
-        })
-        .catch((error) => {
-          console.error("Error saving groups:", error);
-        });
-    },
-    createGroup(group) {
-      axios
-        .post("http://localhost:3000/groups", {
-          ...group,
-          children: JSON.stringify(group.children),
-        })
-        .then((response) => {
-          this.groupsData.push(response.data);
-        })
-        .catch((error) => {
-          console.error("Error creating group:", error);
-        });
-    },
-    updateGroup(id, group) {
-      axios
-        .put(`http://localhost:3000/groups/${id}`, {
-          ...group,
-          children: JSON.stringify(group.children),
-        })
-        .then((response) => {
-          const index = this.groupsData.findIndex((g) => g.id === id);
-          if (index !== -1) {
-            this.groupsData.splice(index, 1, response.data);
-          }
-        })
-        .catch((error) => {
-          console.error("Error updating group:", error);
-        });
-    },
-
-    deleteGroup(id) {
-      axios
-        .delete(`http://localhost:3000/groups/${id}`)
-        .then(() => {
-          const index = this.groupsData.findIndex((g) => g.id === id);
-          if (index !== -1) {
-            this.groupsData.splice(index, 1);
-          }
-        })
-        .catch((error) => {
-          console.error("Error deleting group:", error);
-        });
-    },
-    updateUserProjects(userId, projectIds) {
-      axios
-        .put(`http://localhost:3000/users/${userId}/projects`, {
-          projects: projectIds,
-        })
-        .then((response) => {
-          console.log("User's projects updated with ID:", response.data.userId);
-          // Update the usersData array in the store
-          const user = this.usersData.find((u) => u.id === userId);
-          if (user) {
-            user.projects = response.data.projects;
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    },
-
     updateUser(userId, updatedUser) {
       console.log("User ID:", userId);
       axios
@@ -228,55 +116,6 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error:", error);
         });
     },
-    getUserProjects(userId) {
-      return axios
-        .get(`http://localhost:3000/users/${userId}/projects`)
-        .then((response) => {
-          // The server returns an array of projects
-          // Each project is an object with an id property
-          const projects = response.data;
-
-          // Map the projects to their ids
-          const projectIds = projects.map((project) => project.id);
-
-          return projectIds;
-        })
-        .catch((error) => {
-          console.error("Error fetching user projects:", error);
-        });
-    },
-
-    fetchProjects() {
-      axios
-        .get("http://localhost:3000/projects")
-        .then((response) => {
-          this.projectData = response.data;
-        })
-        .catch((error) => {
-          console.error("Error fetching projects:", error);
-        });
-    },
-
-    initProjects() {
-      this.fetchProjects();
-    },
-    // Action to update a project
-    updateProject(projectId, updatedProject) {
-      axios
-        .put(`http://localhost:3000/projects/${projectId}`, updatedProject)
-        .then((response) => {
-          console.log("Project updated with ID:", response.data.id);
-          const index = this.projectData.findIndex(
-            (p) => p.id === response.data.id
-          );
-          if (index !== -1) {
-            this.projectData.splice(index, 1, response.data);
-          }
-        })
-        .catch((error) => {
-          console.error("Error updating project:", error);
-        });
-    },
     editUser(router, info) {
       router.push(`/admin/user/edit/${info.id}`);
     },
@@ -290,14 +129,6 @@ export const useAppStore = defineStore("appStore", {
 
         return user;
       });
-    },
-
-    reviewProject(router, info) {
-      router.push(`/admin/project/review/${info.id}`);
-    },
-
-    editProject(router, info) {
-      router.push(`/admin/project/edit/${info.id}`);
     },
 
     logout() {
