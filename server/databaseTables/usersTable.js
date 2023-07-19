@@ -21,7 +21,7 @@ db.run("PRAGMA foreign_keys = ON");
 db.run(
   `CREATE TABLE IF NOT EXISTS users(
   id TEXT PRIMARY KEY,
-  username TEXT,
+  username TEXT UNIQUE,
   fullName TEXT,
   email TEXT UNIQUE,
   companyName TEXT,

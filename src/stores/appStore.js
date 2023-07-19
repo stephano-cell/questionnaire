@@ -163,33 +163,33 @@ export const useAppStore = defineStore("appStore", {
         });
     },
 
-    postNewGroup(groupData) {
-      console.log("Group Data:", groupData); // Add this line
+    postNewTemplateGroup(groupData) {
+      console.log("Group Data:", groupData);
 
       return axios
         .post("http://localhost:3000/templateGroups/new", groupData)
         .then((response) => {
           console.log("New group created with ID:", response.data.id);
-          return response; // make sure to return the response
+          return response; // Return only the data from the response
         })
         .catch((error) => {
           console.error("Error creating new group:", error);
-          return Promise.reject(error); // make sure to return a rejected Promise in case of an error
+          return Promise.reject(error);
         });
     },
 
-    postNewQuestion(questionData) {
-      console.log("Question Data:", questionData); // Add this line
+    postNewTemplateQuestion(questionData) {
+      console.log("Question Data:", questionData);
 
       return axios
         .post("http://localhost:3000/templateQuestions/new", questionData)
         .then((response) => {
           console.log("New question created with ID:", response.data.id);
-          return response; // make sure to return the response
+          return response; // Return only the data from the response
         })
         .catch((error) => {
           console.error("Error creating new question:", error);
-          return Promise.reject(error); // make sure to return a rejected Promise in case of an error
+          return Promise.reject(error);
         });
     },
 
@@ -241,7 +241,7 @@ export const useAppStore = defineStore("appStore", {
         });
     },
 
-    async updateGroup(id, data) {
+    async updateTemplateGroup(id, data) {
       await axios
         .put(`http://localhost:3000/templateGroups/${id}`, data)
         .then((response) => {
@@ -251,8 +251,17 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error updating group:", error);
         });
     },
-
-    async updateQuestion(id, data) {
+    deleteTemplateGroup(groupId) {
+      axios
+        .delete(`http://localhost:3000/templateGroups/${groupId}`)
+        .then(() => {
+          console.log(`Group ${groupId} deleted`);
+        })
+        .catch((error) => {
+          console.error("Error deleting group:", error);
+        });
+    },
+    async updateTemplateQuestion(id, data) {
       await axios
         .put(`http://localhost:3000/templateQuestions/${id}`, data)
         .then((response) => {
@@ -260,6 +269,16 @@ export const useAppStore = defineStore("appStore", {
         })
         .catch((error) => {
           console.error("Error updating question:", error);
+        });
+    },
+    deleteTemplateQuestion(questionId) {
+      axios
+        .delete(`http://localhost:3000/templateQuestions/${questionId}`)
+        .then(() => {
+          console.log(`Question ${questionId} deleted`);
+        })
+        .catch((error) => {
+          console.error("Error deleting question:", error);
         });
     },
 

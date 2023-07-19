@@ -232,6 +232,8 @@ export default {
     const store = useAppStore();
     const router = useRouter();
     const templateName = ref("");
+    const deletedGroups = ref([]);
+    const deletedQuestions = ref([]);
     const templateDescription = ref("");
     const selectedNodeId = computed(() => {
       const node = flattenedNodes.value.find(
@@ -333,6 +335,7 @@ export default {
         id: v4(), // Add a UUID to the group
         label: groupName.value,
         children: [],
+        isNew: true, // Add this line
       });
       tempGroups.value.sort((a, b) => a.label.localeCompare(b.label)); // Sort groups alphabetically
       groupName.value = "";
@@ -348,6 +351,7 @@ export default {
           id: v4(), // Add a UUID to the question
           label: questionTitle.value,
           description: questionDescription.value,
+          isNew: true, // Add this line
         });
         group.children.sort((a, b) => a.label.localeCompare(b.label)); // Sort questions alphabetically
         // Update the group label to include the new count
@@ -402,6 +406,7 @@ export default {
       );
       if (index !== -1) {
         tempGroups.value.splice(index, 1);
+        deletedGroups.value.push(selectedGroupToDelete.value.value);
         selectedGroupToDelete.value = "";
         showDeleteGroupDialog.value = false;
       }
@@ -416,6 +421,7 @@ export default {
           );
           if (index !== -1) {
             group.children.splice(index, 1);
+            deletedQuestions.value.push(selectedQuestionToDelete.value.value);
             // Update the group label to include the new count
             selectedQuestionToDelete.value = "";
             showDeleteQuestionDialog.value = false;
@@ -454,7 +460,7 @@ export default {
 
                 // Create a promise for group creation
                 const createGroupPromise = store
-                  .postNewGroup(groupData)
+                  .postNewTemplateGroup(groupData)
                   .then((groupResponse) => {
                     const groupId = groupResponse.data.id;
 
@@ -469,7 +475,7 @@ export default {
 
                       // Create a promise for question creation
                       const createQuestionPromise =
-                        store.postNewQuestion(questionData);
+                        store.postNewTemplateQuestion(questionData);
                       promises.push(createQuestionPromise);
                     });
                   });
@@ -527,21 +533,58 @@ export default {
             };
             await store.updateTemplate(props.id, templateData);
 
-            // Update groups and questions
+            // Update and create groups and questions
             for (const group of tempGroups.value) {
-              const groupData = {
-                groupName: group.label,
-              };
-              await store.updateGroup(group.id, groupData);
+              if (group.isNew) {
+                // Create a new group
+                const groupData = {
+                  groupName: group.label,
+                  templateId: props.id, // I'm assuming you want to link the new group to the current template
+                };
+                const response = await store.postNewTemplateGroup(groupData);
+                group.id = response.data.id; // Update the group id with the id from the response
+                delete group.isNew; // Remove the isNew attribute
+              } else {
+                // Update the existing group
+                const groupData = {
+                  groupName: group.label,
+                };
+                await store.updateTemplateGroup(group.id, groupData);
+              }
 
               for (const question of group.children) {
-                const questionData = {
-                  questionTitle: question.label,
-                  questionDescription: question.description,
-                };
-                await store.updateQuestion(question.id, questionData);
+                if (question.isNew) {
+                  // Create a new question
+                  const questionData = {
+                    questionTitle: question.label,
+                    questionDescription: question.description,
+                    groupId: group.id, // I'm assuming you want to link the new question to the current group
+                  };
+                  const response = await store.postNewTemplateQuestion(
+                    questionData
+                  );
+                  question.id = response.data.id; // Update the question id with the id from the response
+                  delete question.isNew; // Remove the isNew attribute
+                } else {
+                  // Update the existing question
+                  const questionData = {
+                    questionTitle: question.label,
+                    questionDescription: question.description,
+                  };
+                  await store.updateTemplateQuestion(question.id, questionData);
+                }
               }
             }
+            // Delete the groups and questions that have been marked for deletion
+            for (const groupId of deletedGroups.value) {
+              await store.deleteTemplateGroup(groupId);
+            }
+            for (const questionId of deletedQuestions.value) {
+              await store.deleteTemplateQuestion(questionId);
+            }
+            // Clear the lists of deleted groups and questions only after they have been deleted from the database
+            deletedGroups.value = [];
+            deletedQuestions.value = [];
 
             // All groups and questions are updated, navigate back
             router.back();
@@ -586,6 +629,8 @@ export default {
       editSelected,
       selectedNodeId,
       templateId,
+      deletedGroups,
+      deletedQuestions,
     };
   },
 };

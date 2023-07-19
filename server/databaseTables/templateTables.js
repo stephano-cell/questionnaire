@@ -144,6 +144,19 @@ router.put("/templateGroups/:id", (req, res) => {
     }
   );
 });
+// delete group
+router.delete("/templateGroups/:id", (req, res) => {
+  db.run(
+    `DELETE FROM templateGroups WHERE id = ?`,
+    [req.params.id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json({ id: req.params.id });
+    }
+  );
+});
 
 // templateQuestions create table
 db.run(
@@ -200,6 +213,20 @@ router.put("/templateQuestions/:id", (req, res) => {
   db.run(
     `UPDATE templateQuestions SET questionTitle = ?, questionDescription = ? WHERE id = ?`,
     [questionTitle, questionDescription, req.params.id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json({ id: req.params.id });
+    }
+  );
+});
+
+//delete questions
+router.delete("/templateQuestions/:id", (req, res) => {
+  db.run(
+    `DELETE FROM templateQuestions WHERE id = ?`,
+    [req.params.id],
     function (err) {
       if (err) {
         return res.status(400).json({ error: err.message });
