@@ -137,14 +137,16 @@ export const useAppStore = defineStore("appStore", {
     //templates
 
     fetchTemplates() {
-      axios
+      return axios
         .get("http://localhost:3000/template/list")
         .then((response) => {
-          console.log("Fetched templates:", response.data); // Add this line
+          console.log("Fetched templates:", response.data);
           this.template = response.data;
+          return response.data; // Return the fetched templates
         })
         .catch((error) => {
           console.error("Error fetching templates:", error);
+          throw error; // Re-throw the error to propagate it to the caller
         });
     },
 
@@ -207,27 +209,30 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error fetching template:", error);
         });
     },
-
     async fetchTemplateGroups(templateId) {
-      return axios
-        .get(`http://localhost:3000/templateGroups/${templateId}`)
-        .then((response) => {
-          return response.data;
-        })
-        .catch((error) => {
-          console.error("Error fetching template groups:", error);
-        });
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/templateGroups/${templateId}`
+        );
+        console.log("Fetched groups:", response.data); // Add this line to check the fetched groups
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching template groups:", error);
+        return [];
+      }
     },
 
     async fetchTemplateQuestions(groupId) {
-      return axios
-        .get(`http://localhost:3000/templateQuestions/${groupId}`)
-        .then((response) => {
-          return response.data;
-        })
-        .catch((error) => {
-          console.error("Error fetching template questions:", error);
-        });
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/templateQuestions/${groupId}`
+        );
+        console.log("Fetched questions:", response.data); // Add this line to check the fetched questions
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching template questions:", error);
+        return [];
+      }
     },
 
     async updateTemplate(id, data) {

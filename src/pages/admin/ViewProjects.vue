@@ -19,6 +19,13 @@
       :rules="[(val) => (val && val.length > 0) || 'Please type something']"
       class="q-ma-md q-mb-ml"
     />
+    <q-select
+      filled
+      v-model="selectedTemplate"
+      :options="templates"
+      label="Select a template"
+      @input="fetchTemplateDetails"
+    />
 
     <div class="q-pa-md">
       <q-btn
@@ -192,7 +199,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
 import { v4 } from "uuid";
@@ -211,6 +218,8 @@ export default {
   setup(props) {
     const splitterModel = ref(20);
     const store = useAppStore();
+    const templates = ref([]);
+    const selectedTemplate = ref(null);
 
     const router = useRouter();
     const projectName = ref("");
@@ -265,20 +274,6 @@ export default {
     });
 
     const groups = ref([]);
-    watch(
-      ticked,
-      () => {
-        const traverse = (node) => {
-          if (node.children) {
-            node.children.forEach((child) => {
-              child.ticked = ticked.value.includes(child.id);
-            });
-          }
-        };
-        groups.value.forEach(traverse);
-      },
-      { deep: true }
-    );
 
     const showCreateGroupDialog = ref(false);
     const showCreateQuestionDialog = ref(false);
@@ -432,81 +427,24 @@ export default {
     const groupOptions = computed(() => {
       return groups.value.map((group) => group.label);
     });
-    onMounted(async () => {
-      await store.fetchGroups();
-      if (store.groupsData) {
-        groups.value = JSON.parse(JSON.stringify(store.groupsData)).map(
-          (group) => {
-            group.children = group.children.map((question) => {
-              return question;
-            });
-            return group;
-          }
-        );
-      }
-
-      if (props.mode === "edit" && props.id) {
-        const project = store.projectData.find(
-          (project) => project.id === props.id
-        );
-        if (project) {
-          projectName.value = project.projectName;
-          company.value = project.company;
-          comment.value = project.comment;
-          groups.value = project.groups;
-
-          // Set the ticked value to the ticked questions of the project
-          ticked.value = getTickedQuestions(project.groups);
-        }
-      }
-    });
-
-    // Helper function to get the ticked groups from a project
-    // Helper function to get the ticked groups from a project
-    function getTickedQuestions(groups) {
-      const tickedQuestions = [];
-      const traverse = (node) => {
-        if (node.children) {
-          node.children.forEach((child) => {
-            if (child.ticked) {
-              tickedQuestions.push(child.id);
-            }
-          });
-        }
-      };
-      groups.forEach(traverse);
-      return tickedQuestions;
-    }
 
     if (props.mode === "new") {
+      store.fetchTemplates().then((fetchedTemplates) => {
+        if (Array.isArray(fetchedTemplates)) {
+          templates.value = fetchedTemplates.map((template) => ({
+            label: template.name,
+            value: template.id,
+          }));
+        } else {
+          // handle the case when fetchedTemplates is not an array
+          console.error("fetchedTemplates is not an array:", fetchedTemplates);
+        }
+      });
+
       store.installActions([
         {
           label: "CREATE PROJECT",
           callback: () => {
-            // Create a deep copy of the groups
-            const copiedGroups = JSON.parse(JSON.stringify(groups.value));
-
-            // Assign new UUIDs to the groups and questions in the copy
-            copiedGroups.forEach((group) => {
-              group.id = v4();
-              group.children.forEach((question) => {
-                question.id = v4();
-              });
-            });
-
-            store.insertNewProject({
-              id: v4(),
-              projectName: projectName.value,
-              company: company.value,
-              comment: comment.value,
-              groups: copiedGroups.map((group) => ({
-                ...group,
-                children: group.children.map((question) => ({
-                  ...question,
-                  ticked: question.ticked,
-                })),
-              })),
-            });
             router.back();
           },
         },
@@ -517,79 +455,19 @@ export default {
           label: "Save",
           callback: () => {
             // Create a deep copy of the groups
-            const copiedGroups = JSON.parse(JSON.stringify(groups.value));
 
-            // Assign new UUIDs to the groups and questions in the copy
-            copiedGroups.forEach((group) => {
-              group.id = v4();
-              group.children.forEach((question) => {
-                question.id = v4();
-              });
-            });
-
-            // Find the index of the project to update
-            const projectIndex = store.projectData.findIndex(
-              (project) => project.id === props.id
-            );
-
-            if (projectIndex !== -1) {
-              // Update the project
-              store.projectData[projectIndex] = {
-                id: props.id,
-                projectName: projectName.value,
-                company: company.value,
-                comment: comment.value,
-                groups: copiedGroups,
-              };
-
-              // Call the updateProject action with the project ID and updated project
-              store.updateProject(props.id, {
-                projectName: projectName.value,
-                company: company.value,
-                comment: comment.value,
-                groups: copiedGroups,
-              });
-
-              router.back();
-            }
+            router.back();
           },
         },
         {
           label: "CLONE",
           callback: () => {
-            // Create a deep copy of the groups
-            // Clone the project
-            const copiedGroups = JSON.parse(JSON.stringify(groups.value));
-
-            // Assign new UUIDs to the groups and questions in the copy
-            copiedGroups.forEach((group) => {
-              group.id = v4();
-
-              group.children.forEach((question) => {
-                question.id = v4();
-              });
-            });
-
-            // Insert the cloned project
-            store.insertNewProject({
-              id: v4(),
-              projectName: projectName.value,
-              company: company.value,
-              comment: comment.value,
-              groups: copiedGroups.map((group) => ({
-                ...group,
-                children: group.children.map((question) => ({
-                  ...question,
-                  ticked: question.ticked,
-                })),
-              })),
-            });
-
             router.back();
           },
         },
       ]);
     }
+
     return {
       splitterModel,
       selectedNodeId,
@@ -622,6 +500,8 @@ export default {
       projectName,
       company,
       comment,
+      templates,
+      selectedTemplate,
     };
   },
 };
