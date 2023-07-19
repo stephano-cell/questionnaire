@@ -22,7 +22,9 @@ db.run(
     id TEXT PRIMARY KEY,
     name TEXT,
     company TEXT,
-    comment TEXT
+    comment TEXT,
+    templateId TEXT,
+    FOREIGN KEY(templateId) REFERENCES template(id)
   )
 `,
   (err) => {
@@ -32,43 +34,72 @@ db.run(
   }
 );
 
-// Create projectsGroups table
-db.run(
-  `
-  CREATE TABLE IF NOT EXISTS projectsGroups (
-    id TEXT PRIMARY KEY,
-    groupName TEXT,
-    projectId TEXT,
-    FOREIGN KEY(projectId) REFERENCES projects(id)
-  )
-`,
-  (err) => {
-    if (err) {
-      console.error("Error creating projectsGroups table: ", err.message);
-    }
-  }
-);
-
 // Create projectsQuestions table
 db.run(
   `
   CREATE TABLE IF NOT EXISTS projectsQuestions (
     id TEXT PRIMARY KEY,
-    questionTitle TEXT,
-    questionDescription TEXT,
-    groupId TEXT,
     isTicked BOOLEAN DEFAULT false,
     isLocked BOOLEAN DEFAULT false,
     isCompleted BOOLEAN DEFAULT false,
-    FOREIGN KEY(groupId) REFERENCES projectsGroups(id)
+    templateQuestionId TEXT,
+    projectId TEXT,
+    FOREIGN KEY(templateQuestionId) REFERENCES templateQuestions(id),
+    FOREIGN KEY(projectId) REFERENCES projects(id)
+
   )
 `,
   (err) => {
     if (err) {
       console.error("Error creating projectsQuestions table: ", err.message);
     }
+    console.log("projectsQuestions table created");
   }
 );
 
+//post.request
+// Add a new project
+router.post("/projects/new", (req, res) => {
+  const { name, company, comment, templateId } = req.body;
+
+  const projectId = uuidv4(); // Generate a new ID for the project
+
+  db.run(
+    `INSERT INTO projects(id, name, company, comment, templateId) VALUES(?, ?, ?, ?, ?)`,
+    [projectId, name, company, comment, templateId],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(201).json({ id: projectId });
+    }
+  );
+});
+
+// Add a new project question
+router.post("/projectsQuestions/new", (req, res) => {
+  const { isTicked, isLocked, isCompleted, templateQuestionId, projectId } =
+    req.body;
+
+  const projectQuestionId = uuidv4(); // Generate a new ID for the project question
+
+  db.run(
+    `INSERT INTO projectsQuestions(id, isTicked, isLocked, isCompleted, templateQuestionId, projectId) VALUES(?, ?, ?, ?, ?, ?)`,
+    [
+      projectQuestionId,
+      isTicked,
+      isLocked,
+      isCompleted,
+      templateQuestionId,
+      projectId,
+    ],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(201).json({ id: projectQuestionId });
+    }
+  );
+});
 //Projects
 module.exports = router;

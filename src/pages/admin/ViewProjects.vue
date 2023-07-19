@@ -109,6 +109,7 @@ export default {
     const comment = ref("");
     const showCommentDialog = ref(false);
     const selected = ref("");
+    const ticked = ref("");
     const saveComment = () => {
       // Save your comment here
       console.log(comment.value);
@@ -116,7 +117,7 @@ export default {
       // Close the dialog
       showCommentDialog.value = false;
     };
-    const ticked = ref("");
+
     const selectedNodeId = computed(() => {
       const node = flattenedNodes.value.find(
         (node) => node.id === selected.value
@@ -229,7 +230,7 @@ export default {
       comment,
       saveComment,
       showCommentDialog,
-
+      ticked,
       selected,
     };
   },

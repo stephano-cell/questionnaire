@@ -7,9 +7,11 @@ export const useAppStore = defineStore("appStore", {
     dynamicActions: [],
     auth: LocalStorage.getItem("auth") || null,
     usersData: [],
-    templateGroups: [], // Add this state property
-    templateQuestions: [], // Add this state property
+    templateGroups: [],
+    templateQuestions: [],
     template: [],
+    projects: [],
+    projectsQuestions: [],
   }),
 
   getters: {
@@ -284,6 +286,34 @@ export const useAppStore = defineStore("appStore", {
         })
         .catch((error) => {
           console.error("Error deleting question:", error);
+        });
+    },
+    //createProject
+    createProject(projectData) {
+      return axios
+        .post("http://localhost:3000/projects/new", projectData)
+        .then((response) => {
+          console.log("New project created with ID:", response.data.id);
+          return { id: response.data.id };
+        })
+        .catch((error) => {
+          console.error("Error creating new project:", error);
+        });
+    },
+
+    // Create a new project question
+    createProjectQuestion(questionData) {
+      return axios
+        .post("http://localhost:3000/projectsQuestions/new", questionData)
+        .then((response) => {
+          console.log(
+            "New project question created with ID:",
+            response.data.id
+          );
+          return { id: response.data.id };
+        })
+        .catch((error) => {
+          console.error("Error creating new project question:", error);
         });
     },
 
