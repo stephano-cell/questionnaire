@@ -68,7 +68,13 @@ const columns = [
   },
 
   { name: "company", label: "Company", field: "company", sortable: true },
+  {
+    name: "templateName",
 
+    label: "template",
+    field: "templateName",
+    sortable: true,
+  },
   {
     name: "comment",
     style: "min-width: 200px; width: 300px",
@@ -111,6 +117,7 @@ const columns = [
     field: "status",
     sortable: true,
   },
+
   {
     name: "review",
     label: "",
@@ -133,7 +140,7 @@ export default {
     const navigationActive = ref(false);
     const pagination = ref({});
     const store = useAppStore();
-    store.initProjects();
+
     const router = useRouter();
     const rows = ref([]);
 
@@ -145,17 +152,6 @@ export default {
         },
       },
     ]);
-    onMounted(async () => {
-      await store.fetchProjects(); // Fetch projects when the component is mounted
-      rows.value = store.projectData; // Assign the fetched projects to the rows computed property
-    });
-    watch(
-      () => store.projectData,
-      (newProjectData) => {
-        rows.value = newProjectData;
-      },
-      { immediate: true }
-    );
 
     return {
       tableRef,
