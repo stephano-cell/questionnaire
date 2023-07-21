@@ -26,7 +26,7 @@
           size="20em"
           @click="adminTemplateList"
         />
-        Template
+        Templates
       </q-tab>
     </q-tabs>
   </q-page>
