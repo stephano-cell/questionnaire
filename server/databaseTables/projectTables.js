@@ -35,29 +35,6 @@ db.run(
   }
 );
 
-// Create projectsQuestions table
-db.run(
-  `
-  CREATE TABLE IF NOT EXISTS projectsQuestions (
-    id TEXT PRIMARY KEY,
-    isTicked BOOLEAN DEFAULT false,
-    isLocked BOOLEAN DEFAULT false,
-    isCompleted BOOLEAN DEFAULT false,
-    templateQuestionId TEXT,
-    projectId TEXT,
-    FOREIGN KEY(templateQuestionId) REFERENCES templateQuestions(id),
-    FOREIGN KEY(projectId) REFERENCES projects(id)
-
-  )
-`,
-  (err) => {
-    if (err) {
-      console.error("Error creating projectsQuestions table: ", err.message);
-    }
-    console.log("projectsQuestions table created");
-  }
-);
-
 //post.request
 // Add a new project
 router.post("/projects/new", (req, res) => {
@@ -90,6 +67,29 @@ router.get("/projects/template/:templateId", (req, res) => {
     }
   );
 });
+
+// Create projectsQuestions table
+db.run(
+  `
+  CREATE TABLE IF NOT EXISTS projectsQuestions (
+    id TEXT PRIMARY KEY,
+    isTicked BOOLEAN DEFAULT false,
+    isLocked BOOLEAN DEFAULT false,
+    isCompleted BOOLEAN DEFAULT false,
+    templateQuestionId TEXT,
+    projectId TEXT,
+    FOREIGN KEY(templateQuestionId) REFERENCES templateQuestions(id),
+    FOREIGN KEY(projectId) REFERENCES projects(id)
+
+  )
+`,
+  (err) => {
+    if (err) {
+      console.error("Error creating projectsQuestions table: ", err.message);
+    }
+    console.log("projectsQuestions table created");
+  }
+);
 
 // Add a new project question
 router.post("/projectsQuestions/new", (req, res) => {
