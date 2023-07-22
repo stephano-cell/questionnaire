@@ -321,7 +321,7 @@ export const useAppStore = defineStore("appStore", {
         throw error;
       }
     },
-    // In your appStore.js
+
     fetchProjects() {
       return axios
         .get("http://localhost:3000/projects")
@@ -333,6 +333,11 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error fetching projects:", error);
           return []; // Return an empty array on error
         });
+    },
+    //edit project
+
+    editProject(router, info) {
+      router.push(`/admin/project/edit/${info.id}`);
     },
 
     logout() {

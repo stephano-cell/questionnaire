@@ -146,6 +146,7 @@ export default {
     onMounted(async () => {
       const projects = await store.fetchProjects();
       rows.value = projects.map((project) => ({
+        id: project.id,
         projectName: project.name,
         company: project.company,
         templateName: project.templateName,

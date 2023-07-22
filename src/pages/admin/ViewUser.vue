@@ -184,7 +184,6 @@ export default {
       fullName,
       email,
       companyName,
-
       password,
       role,
       roles,
