@@ -135,6 +135,36 @@ export default {
     const router = useRouter();
     const projectName = ref("");
     const company = ref("");
+    const createProject = async () => {
+      const projectData = {
+        name: projectName.value,
+        company: company.value,
+        comment: comment.value,
+        templateId: selectedTemplate.value.id,
+      };
+      const newProject = await store.createProject(projectData);
+
+      // Filter out the groups from the flattened nodes
+      const questions = flattenedNodes.value.filter(
+        (node) => node.children === undefined
+      );
+
+      // For each question, create a new entry in the projectsQuestions table
+      for (const question of questions) {
+        console.log("Creating project question:", question); // Log the question object
+        const projectQuestionData = {
+          isTicked: ticked.value.includes(question.id), // Use isTicked value from question
+          isLocked: false, // False by default, change if needed
+          isCompleted: false, // False by default, change if needed
+          templateQuestionId: question.id,
+          projectId: newProject.id,
+        };
+        console.log("Project question data:", projectQuestionData); // Log the data to be sent to the server
+        await store.createProjectQuestion(projectQuestionData);
+      }
+
+      router.back(); // Navigate back after creating project and project questions
+    };
 
     // Fetch templates and their details
     const fetchTemplates = async () => {
@@ -142,9 +172,7 @@ export default {
         store.installActions([
           {
             label: "CREATE PROJECT",
-            callback: () => {
-              router.back();
-            },
+            callback: createProject,
           },
         ]);
 
@@ -198,7 +226,8 @@ export default {
     const flattenNodes = (nodes) => {
       const flattened = [];
       for (const node of nodes) {
-        flattened.push(node);
+        // Add isTicked property to each node, set to false by default
+        flattened.push({ ...node, isTicked: false });
         if (node.children) {
           flattened.push(...flattenNodes(node.children));
         }
@@ -232,6 +261,7 @@ export default {
       showCommentDialog,
       ticked,
       selected,
+      createProject,
     };
   },
 };

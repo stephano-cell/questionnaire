@@ -300,21 +300,18 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error creating new project:", error);
         });
     },
-
-    // Create a new project question
-    createProjectQuestion(questionData) {
-      return axios
-        .post("http://localhost:3000/projectsQuestions/new", questionData)
-        .then((response) => {
-          console.log(
-            "New project question created with ID:",
-            response.data.id
-          );
-          return { id: response.data.id };
-        })
-        .catch((error) => {
-          console.error("Error creating new project question:", error);
-        });
+    async createProjectQuestion(questionData) {
+      try {
+        const response = await axios.post(
+          "http://localhost:3000/projectsQuestions/new",
+          questionData
+        );
+        console.log("New project question created with ID:", response.data.id);
+        return { id: response.data.id };
+      } catch (error) {
+        console.error("Error creating new project question:", error);
+        throw error;
+      }
     },
 
     logout() {
@@ -322,7 +319,6 @@ export const useAppStore = defineStore("appStore", {
       this.auth = null;
       LocalStorage.remove("auth");
     },
-
     authenticate(username, pass) {
       return axios
         .post("http://localhost:3000/login", {
