@@ -565,6 +565,23 @@ export default {
                   );
                   question.id = response.data.id; // Update the question id with the id from the response
                   delete question.isNew; // Remove the isNew attribute
+
+                  // Fetch all projects that use the current template
+                  const projects = await store.fetchProjectsByTemplateId(
+                    props.id
+                  );
+
+                  // For each project, create a new entry in the projectsQuestions table
+                  for (const project of projects) {
+                    const projectQuestionData = {
+                      isTicked: false,
+                      isLocked: false,
+                      isCompleted: false,
+                      templateQuestionId: question.id,
+                      projectId: project.id,
+                    };
+                    await store.createProjectQuestion(projectQuestionData);
+                  }
                 } else {
                   // Update the existing question
                   const questionData = {

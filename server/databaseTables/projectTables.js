@@ -76,6 +76,20 @@ router.post("/projects/new", (req, res) => {
     }
   );
 });
+router.get("/projects/template/:templateId", (req, res) => {
+  const templateId = req.params.templateId;
+
+  db.all(
+    `SELECT * FROM projects WHERE templateId = ?`,
+    [templateId],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      return res.status(200).json(rows);
+    }
+  );
+});
 
 // Add a new project question
 router.post("/projectsQuestions/new", (req, res) => {
