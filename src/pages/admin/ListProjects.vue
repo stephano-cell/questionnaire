@@ -71,7 +71,7 @@ const columns = [
   {
     name: "templateName",
 
-    label: "template",
+    label: "Template Name",
     field: "templateName",
     sortable: true,
   },
@@ -83,17 +83,17 @@ const columns = [
     field: "comment",
   },
   {
-    name: "last_client_activity",
+    name: "lastClientActivity",
     align: "center",
-    label: "last_client_activity",
-    field: "last_client_activity",
+    label: "Last Client Activity",
+    field: "lastClientActivity",
     sortable: true,
   },
   {
-    name: "client_remaining_questions",
+    name: "clientToAnswer",
     align: "center",
-    label: "Client:Remaining Question",
-    field: "client_remaining_questions",
+    label: "Client To Answer",
+    field: "clientToAnswer",
     sortable: true,
   },
   {
@@ -104,16 +104,16 @@ const columns = [
     sortable: true,
   },
   {
-    name: "admin_remaining_review",
+    name: "adminToReview",
     align: "center",
-    label: "Admin:remaining to review",
-    field: "admin_remaining_reviewed",
+    label: "Admin To Review",
+    field: "adminToReview",
     sortable: true,
   },
   {
     name: "status",
     align: "center",
-    label: "status",
+    label: "Status",
     field: "status",
     sortable: true,
   },
@@ -143,6 +143,15 @@ export default {
 
     const router = useRouter();
     const rows = ref([]);
+    onMounted(async () => {
+      const projects = await store.fetchProjects();
+      rows.value = projects.map((project) => ({
+        projectName: project.name,
+        company: project.company,
+        templateName: project.templateName,
+        comment: project.comment,
+      }));
+    });
 
     store.installActions([
       {

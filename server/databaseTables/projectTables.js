@@ -67,6 +67,23 @@ router.get("/projects/template/:templateId", (req, res) => {
     }
   );
 });
+router.get("/projects", (req, res) => {
+  db.all(
+    `
+    SELECT projects.*, template.name AS templateName
+    FROM projects
+    JOIN template ON projects.templateId = template.id
+    `,
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error("Error executing SQL query: ", err);
+        return res.status(500).json({ error: err.message });
+      }
+      return res.status(200).json(rows);
+    }
+  );
+});
 
 // Create projectsQuestions table
 db.run(
