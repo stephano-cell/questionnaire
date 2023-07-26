@@ -133,8 +133,47 @@ export default {
     });
 
     const router = useRouter();
+    const projectId = ref(null);
     const projectName = ref("");
     const company = ref("");
+    const projectDetails = ref(null);
+    function groupBy(array, key) {
+      return array.reduce((result, currentItem) => {
+        (result[currentItem[key]] = result[currentItem[key]] || []).push(
+          currentItem
+        );
+        return result;
+      }, {});
+    }
+
+    if (props.mode === "edit") {
+      projectId.value = router.currentRoute.value.params.id; // Get the project ID from the route params
+      store.fetchProject(projectId.value).then((project) => {
+        projectName.value = project.name; // Set the form fields with the project details
+        company.value = project.company;
+        comment.value = project.comment;
+      });
+      store.fetchProjectDetails(projectId.value).then((details) => {
+        // Transform the project details into the format expected by the q-tree component
+        const groupedDetails = groupBy(details, "groupId");
+        groups.value = Object.values(groupedDetails).map((groupDetails) => ({
+          id: groupDetails[0].groupId,
+          label: groupDetails[0].groupName,
+          children: groupDetails.map((question) => ({
+            id: question.questionId,
+            label: question.questionText,
+            isTicked: question.isTicked,
+          })),
+        }));
+
+        // Extract the IDs of the ticked questions and update the `ticked` ref
+        const tickedQuestionIds = details
+          .filter((detail) => detail.isTicked)
+          .map((detail) => detail.questionId);
+        ticked.value = tickedQuestionIds;
+      });
+    }
+
     const createProject = async () => {
       const projectData = {
         name: projectName.value,
@@ -257,11 +296,13 @@ export default {
       flattenedNodes,
       props,
       comment,
+      projectId,
       saveComment,
       showCommentDialog,
       ticked,
       selected,
       createProject,
+      projectDetails,
     };
   },
 };

@@ -85,6 +85,51 @@ router.get("/projects", (req, res) => {
   );
 });
 
+router.get("/projects/:projectId", (req, res) => {
+  const projectId = req.params.projectId;
+
+  db.get(`SELECT * FROM projects WHERE id = ?`, [projectId], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    return res.status(200).json(row);
+  });
+});
+router.get("/projects/:projectId/details", (req, res) => {
+  const projectId = req.params.projectId;
+
+  db.all(
+    `
+    SELECT
+      projects.id as projectId, projects.name as projectName, projects.company as company, projects.comment as comment,
+      template.id as templateId, template.name as templateName,
+      templateGroups.id as groupId, templateGroups.groupName as groupName,
+      templateQuestions.id as questionId, templateQuestions.questionTitle as questionText,
+      projectsQuestions.isTicked as isTicked
+    FROM
+      projects
+    INNER JOIN
+      template ON projects.templateId = template.id
+    INNER JOIN
+      templateGroups ON template.id = templateGroups.templateId
+    INNER JOIN
+      templateQuestions ON templateGroups.id = templateQuestions.groupId
+    LEFT JOIN
+      projectsQuestions ON templateQuestions.id = projectsQuestions.templateQuestionId AND projects.id = projectsQuestions.projectId
+    WHERE
+      projects.id = ?
+    `,
+    [projectId],
+    (err, rows) => {
+      if (err) {
+        console.error("SQL error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      return res.status(200).json(rows);
+    }
+  );
+});
+
 // Create projectsQuestions table
 db.run(
   `

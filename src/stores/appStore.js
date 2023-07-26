@@ -334,6 +334,32 @@ export const useAppStore = defineStore("appStore", {
           return []; // Return an empty array on error
         });
     },
+    //fetcing when editing a Project ViewProjects.vue
+    fetchProject(projectId) {
+      return axios
+        .get(`http://localhost:3000/projects/${projectId}`)
+        .then((response) => {
+          console.log("Fetched project:", response.data);
+          return response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching project:", error);
+          throw error; // Re-throw the error to propagate it to the caller
+        });
+    },
+    fetchProjectDetails(projectId) {
+      return axios
+        .get(`http://localhost:3000/projects/${projectId}/details`)
+        .then((response) => {
+          console.log("Fetched project details:", response.data);
+          return response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching project details:", error);
+          throw error; // Re-throw the error to propagate it to the caller
+        });
+    },
+
     //edit project
 
     editProject(router, info) {
