@@ -365,6 +365,27 @@ export const useAppStore = defineStore("appStore", {
     editProject(router, info) {
       router.push(`/admin/project/edit/${info.id}`);
     },
+    updateProject(projectId, updatedProject) {
+      console.log("Project ID:", projectId);
+      axios
+        .put(`http://localhost:3000/projects/${projectId}`, {
+          name: updatedProject.name,
+          company: updatedProject.company,
+          comment: updatedProject.comment,
+        })
+        .then((response) => {
+          console.log("Server response:", response.data);
+          console.log("Project updated with ID:", response.data.id);
+          // Update the projects array in the store
+          const index = this.projects.findIndex((p) => p.id === projectId);
+          if (index !== -1) {
+            this.projects.splice(index, 1, response.data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    },
 
     logout() {
       console.log("Logout");

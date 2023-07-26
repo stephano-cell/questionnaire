@@ -204,6 +204,17 @@ export default {
 
       router.back(); // Navigate back after creating project and project questions
     };
+    const updateProject = async () => {
+      const updatedProject = {
+        name: projectName.value,
+        company: company.value,
+        comment: comment.value,
+      };
+
+      await store.updateProject(projectId.value, updatedProject);
+
+      router.back(); // Navigate back after updating project
+    };
 
     // Fetch templates and their details
     const fetchTemplates = async () => {
@@ -220,9 +231,7 @@ export default {
         store.installActions([
           {
             label: "Save",
-            callback: () => {
-              router.back();
-            },
+            callback: updateProject,
           },
           {
             label: "CLONE",

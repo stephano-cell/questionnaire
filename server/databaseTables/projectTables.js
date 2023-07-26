@@ -130,6 +130,25 @@ router.get("/projects/:projectId/details", (req, res) => {
   );
 });
 
+// Update a project
+router.put("/projects/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, company, comment } = req.body;
+
+  db.run(
+    `UPDATE projects SET name = ?, company = ?, comment = ? WHERE id = ?`,
+    [name, company, comment, id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res
+        .status(200)
+        .json({ message: "success", changes: this.changes });
+    }
+  );
+});
+
 // Create projectsQuestions table
 db.run(
   `
