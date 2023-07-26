@@ -109,7 +109,7 @@ export default {
     const comment = ref("");
     const showCommentDialog = ref(false);
     const selected = ref("");
-    const ticked = ref("");
+    const ticked = ref([]);
     const saveComment = () => {
       // Save your comment here
       console.log(comment.value);
