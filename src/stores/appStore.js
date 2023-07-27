@@ -386,6 +386,17 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error:", error);
         });
     },
+    async updateProjectQuestion(id, questionData) {
+      await axios
+        .put(`http://localhost:3000/projectsQuestions/${id}`, questionData)
+        .then((response) => {
+          console.log("Updated project question with ID:", id);
+          console.log("Server response:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error updating project question:", error);
+        });
+    },
 
     logout() {
       console.log("Logout");

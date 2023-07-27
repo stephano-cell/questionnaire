@@ -105,7 +105,8 @@ router.get("/projects/:projectId/details", (req, res) => {
       template.id as templateId, template.name as templateName,
       templateGroups.id as groupId, templateGroups.groupName as groupName,
       templateQuestions.id as questionId, templateQuestions.questionTitle as questionText,
-      projectsQuestions.isTicked as isTicked
+      projectsQuestions.isTicked as isTicked,
+      projectsQuestions.id as projectQuestionId
     FROM
       projects
     INNER JOIN
@@ -197,5 +198,24 @@ router.post("/projectsQuestions/new", (req, res) => {
     }
   );
 });
+// Update a project question's isTicked status
+router.put("/projectsQuestions/:id", (req, res) => {
+  const { id } = req.params;
+  const { isTicked } = req.body;
+
+  db.run(
+    `UPDATE projectsQuestions SET isTicked = ? WHERE id = ?`,
+    [isTicked, id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res
+        .status(200)
+        .json({ message: "success", changes: this.changes });
+    }
+  );
+});
+
 //Projects
 module.exports = router;

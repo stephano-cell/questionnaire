@@ -146,34 +146,6 @@ export default {
       }, {});
     }
 
-    if (props.mode === "edit") {
-      projectId.value = router.currentRoute.value.params.id; // Get the project ID from the route params
-      store.fetchProject(projectId.value).then((project) => {
-        projectName.value = project.name; // Set the form fields with the project details
-        company.value = project.company;
-        comment.value = project.comment;
-      });
-      store.fetchProjectDetails(projectId.value).then((details) => {
-        // Transform the project details into the format expected by the q-tree component
-        const groupedDetails = groupBy(details, "groupId");
-        groups.value = Object.values(groupedDetails).map((groupDetails) => ({
-          id: groupDetails[0].groupId,
-          label: groupDetails[0].groupName,
-          children: groupDetails.map((question) => ({
-            id: question.questionId,
-            label: question.questionText,
-            isTicked: question.isTicked,
-          })),
-        }));
-
-        // Extract the IDs of the ticked questions and update the `ticked` ref
-        const tickedQuestionIds = details
-          .filter((detail) => detail.isTicked)
-          .map((detail) => detail.questionId);
-        ticked.value = tickedQuestionIds;
-      });
-    }
-
     const createProject = async () => {
       const projectData = {
         name: projectName.value,
@@ -213,6 +185,23 @@ export default {
 
       await store.updateProject(projectId.value, updatedProject);
 
+      // Filter out the groups from the flattened nodes
+      const questions = flattenedNodes.value.filter(
+        (node) => node.children === undefined
+      );
+
+      // For each question, update the isTicked status in the projectsQuestions table
+      for (const question of questions) {
+        console.log("Updating project question:", question); // Log the question object
+        const updatedQuestion = {
+          isTicked: ticked.value.includes(question.id), // Use isTicked value from question
+        };
+        await store.updateProjectQuestion(
+          question.projectQuestionId,
+          updatedQuestion
+        );
+      }
+
       router.back(); // Navigate back after updating project
     };
 
@@ -228,6 +217,33 @@ export default {
 
         templates.value = await store.fetchTemplates();
       } else if (props.mode === "edit") {
+        projectId.value = router.currentRoute.value.params.id; // Get the project ID from the route params
+        store.fetchProject(projectId.value).then((project) => {
+          projectName.value = project.name; // Set the form fields with the project details
+          company.value = project.company;
+          comment.value = project.comment;
+        });
+        store.fetchProjectDetails(projectId.value).then((details) => {
+          // Transform the project details into the format expected by the q-tree component
+          const groupedDetails = groupBy(details, "groupId");
+          groups.value = Object.values(groupedDetails).map((groupDetails) => ({
+            id: groupDetails[0].groupId,
+            label: groupDetails[0].groupName,
+            children: groupDetails.map((question) => ({
+              id: question.questionId,
+              label: question.questionText,
+              isTicked: question.isTicked,
+              projectQuestionId: question.projectQuestionId, // Add this line
+            })),
+          }));
+
+          // Extract the IDs of the ticked questions and update the `ticked` ref
+          const tickedQuestionIds = details
+            .filter((detail) => detail.isTicked)
+            .map((detail) => detail.questionId);
+          ticked.value = tickedQuestionIds;
+        });
+
         store.installActions([
           {
             label: "Save",
@@ -312,6 +328,7 @@ export default {
       selected,
       createProject,
       projectDetails,
+      updateProject,
     };
   },
 };
