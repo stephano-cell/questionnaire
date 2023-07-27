@@ -164,6 +164,23 @@ export default {
         treeRef.value.expandAll();
       }
     };
+    const fetchProjectDetails = async () => {
+      if (projectId.value) {
+        store.fetchProject(projectId.value).then((project) => {
+          projectName.value = project.name;
+        });
+      }
+    };
+
+    onMounted(async () => {
+      try {
+        await nextTick();
+        fetchProjectDetails();
+        fetchProjectTickedQuestions();
+      } catch (error) {
+        console.error(error);
+      }
+    });
 
     fetchProjectTickedQuestions();
     const flattenedNodes = computed(() => {
@@ -271,7 +288,7 @@ export default {
     const latestClientAnswer = computed(() => {
       return clientAnswers.value[clientAnswers.value.length - 1];
     });
-    const projectName = ref("Test 1");
+    const projectName = ref("Project Title");
     const totalQuestions = ref(300);
     const clientToAnswer = ref(150);
     const adminToReview = ref(50);
