@@ -365,6 +365,9 @@ export const useAppStore = defineStore("appStore", {
     editProject(router, info) {
       router.push(`/admin/project/edit/${info.id}`);
     },
+    reviewProject(router, info) {
+      router.push(`/admin/project/review/${info.id}`);
+    },
     updateProject(projectId, updatedProject) {
       console.log("Project ID:", projectId);
       axios
