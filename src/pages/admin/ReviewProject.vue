@@ -1,43 +1,15 @@
 <template>
   <div>
     <q-card bordered>
-      <q-card-section class="row items-center justify-between">
+      <q-card-section>
         <div class="text-h6">{{ projectName }}</div>
-        <q-btn-dropdown unelevated color="primary" label="Export">
-          <q-list>
-            <q-item
-              clickable
-              v-close-popup
-              @click="
-                exportOption = 'With Reviewer Comments';
-                exportData();
-              "
-            >
-              <q-item-section>
-                <q-item-label>With Reviewer Comments</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              v-close-popup
-              @click="
-                exportOption = 'Without Reviewer Comments';
-                exportData();
-              "
-            >
-              <q-item-section>
-                <q-item-label>Without Reviewer Comments</q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-btn-dropdown>
       </q-card-section>
       <q-separator />
       <q-card-section class="row items-center q-col-gutter-md">
         <div class="col">Total Questions: {{ totalQuestions }}</div>
         <div class="col">Client to Answer: {{ clientToAnswer }}</div>
-        <div class="col">Admin to Review: {{ adminToReview }}</div>
-        <div class="col">{{ progress }}% Completed</div>
+        <div class="col">Questions for Reviewer: {{ adminToReview }}</div>
+        <div class="col">{{ status }}% Completed</div>
       </q-card-section>
     </q-card>
   </div>
@@ -46,6 +18,7 @@
       <template v-slot:before>
         <div class="q-pa-md">
           <q-tree
+            ref="treeRef"
             :nodes="groups"
             node-key="label"
             selected-color="primary"
@@ -69,87 +42,38 @@
           >
             <div class="text-h4 q-mb-md">{{ node.label }}</div>
             <p v-html="node.description"></p>
+            <div class="text-subtitle2 q-mb-xs">Client Answer</div>
+            <br />
+            <div v-html="latestClientAnswer.response"></div>
 
+            <q-select
+              v-model="selectedClientAnswer"
+              :options="clientAnswers"
+              label="Client"
+              style="width: 200px"
+              class="q-mb-md"
+              @update:model-value="updateClientAnswer"
+            />
+            <hr />
             <div class="q-mt-md">
-              <br />
-              <div class="text-subtitle2 q-mb-xs">Client Answer</div>
-              <br />
-              <div v-html="clientResponse" class="q-mb-md"></div>
-
-              <q-select
-                v-model="selectedClientResponse"
-                :options="clientResponses"
-                label="Client"
-                style="width: 200px"
-                class="q-mb-md"
-                @update:model-value="updateClientResponse"
-              />
               <div class="text-subtitle2 q-mb-xs">Reviewer Comment</div>
               <q-editor
-                v-model="reviewerResponse"
-                :toolbar="[
-                  ['bold', 'italic', 'strike', 'underline'],
-
-                  [
-                    {
-                      label: $q.lang.editor.fontSize,
-                      icon: $q.iconSet.editor.fontSize,
-                      fixedLabel: true,
-                      fixedIcon: true,
-                      list: 'no-icons',
-                      options: [
-                        'size-1',
-                        'size-2',
-                        'size-3',
-                        'size-4',
-                        'size-5',
-                        'size-6',
-                        'size-7',
-                      ],
-                    },
-                  ],
-                  [
-                    {
-                      label: $q.lang.editor.align,
-                      icon: $q.iconSet.editor.align,
-                      fixedLabel: true,
-                      list: 'only-icons',
-                      options: ['left', 'center', 'right', 'justify'],
-                    },
-                    'unordered',
-                    'ordered',
-                  ],
-
-                  ['undo', 'redo'],
-                  ['fullscreen'],
-                ]"
+                v-model="reviewerComment"
+                class="q-mb-md"
+                :dense="$q.screen.lt.md"
               />
+
               <q-select
-                v-model="selectedReviewerResponse"
+                v-model="selectedReviewerComment"
                 :options="reviewerResponses"
                 label="Reviewer"
                 style="width: 200px"
                 class="q-mb-md"
-                @update:model-value="updateReviewerResponse"
+                @update:model-value="updateReviewerComment"
               />
             </div>
 
             <div class="q-mt-md">
-              <div class="q-mb-md">
-                <q-checkbox
-                  v-model="isLocked"
-                  color="primary"
-                  label="Lock"
-                  class="text-bold q-mr-md"
-                />
-                <q-checkbox
-                  v-model="isComplete"
-                  color="secondary"
-                  label="Complete"
-                  class="text-bold"
-                />
-              </div>
-
               <q-btn
                 label="Submit"
                 color="primary"
@@ -166,120 +90,95 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, nextTick, onMounted, watch } from "vue";
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
-
+import { v4 as uuidv4 } from "uuid";
 export default {
-  setup() {
-    const splitterModel = ref(20);
+  props: {
+    id: {
+      type: String, // or Number, depending on what type your id is
+      required: true,
+    },
+  },
+
+  setup(props, context) {
+    const splitterModel = ref(10);
     const selected = ref(null);
-    const clientResponse = ref("");
-    const reviewerResponse = ref("");
-    const appStore = useAppStore();
-    appStore.initProjects();
-    const router = useRouter();
-    const projectId = router.currentRoute.value.params.id;
-    const projectData = appStore.projectData.find(
-      (project) => project.id === projectId
-    );
-    if (!projectData) {
-      throw new Error("Data not found refresh");
-    }
-    const projectName = ref(projectData.projectName);
+    const reviewerComment = ref("");
+    const treeRef = ref(null);
 
-    const isLocked = ref(false);
-    const isComplete = ref(false);
+    const clientAnswer = ref("");
 
-    const clientResponses = ref([
+    const reviewerComments = ref({});
+    const clientAnswers = ref([
       {
         name: "Client 1",
-        date: "2023-05-18",
-        response: "Client Response 1",
-        label: "Client 1 - 2023-05-10",
-      },
-      {
-        name: "Client 2",
-        date: "2023-05-19",
-        response: "Client Response 2",
-        label: "Client 2 - 2023-05-08",
-      },
-    ]);
-
-    const reviewerResponses = ref([
-      {
-        name: "Reviewer 1",
         date: "2023-05-20",
-        response: "Reviewer Comment 1",
-        label: "Reviewer 1 - 2023-05-10",
+        response: "Client Comment 1",
+        label: "Client 1 - 2023-05-10",
       },
       {
         name: "Reviewer 2",
         date: "2023-05-21",
-        response: "Reviewer Comment 2",
-        label: "Reviewer 2 - 2023-05-09",
+        response: "Client Comment 2",
+        label: "Client 2 - 2023-05-11",
       },
     ]);
 
-    const selectedClientResponse = ref(
-      clientResponses.value[clientResponses.value.length - 1]
+    const selectedReviewerComment = ref(
+      reviewerComments.value[reviewerComments.value.length - 1]
     );
-    const selectedReviewerResponse = ref(
-      reviewerResponses.value[reviewerResponses.value.length - 1]
+    const selectedClientAnswer = ref(
+      clientAnswers.value[clientAnswers.value.length - 1]
     );
 
-    // Compute the groups and flattenedNodes properties
-    // Compute the groups and flattenedNodes properties
-    const groups = computed(() => {
-      const filteredGroups = projectData.groups.map((group) => {
-        const filteredQuestions = group.children.filter(
-          (question) => question.ticked
+    const groups = ref([]);
+    const store = useAppStore();
+    const router = useRouter();
+    const projectId = ref(props.id);
+
+    const fetchProjectTickedQuestions = async () => {
+      if (projectId.value) {
+        const projectTickedQuestions = await store.fetchProjectTickedQuestions(
+          projectId.value
         );
-        return { ...group, children: filteredQuestions };
-      });
+        console.log(projectTickedQuestions); // Log the data
 
-      return filteredGroups.filter((group) => group.children.length > 0);
-    });
+        // Convert the fetched data to the format q-tree expects
+        const groupsMap = new Map();
+        projectTickedQuestions.forEach((question) => {
+          if (!groupsMap.has(question.groupId)) {
+            groupsMap.set(question.groupId, {
+              label: question.groupName,
+              children: [],
+            });
+          }
+          const group = groupsMap.get(question.groupId);
+          group.children.push({
+            label: question.questionText,
+            description: question.comment,
+          });
+        });
+        groups.value = Array.from(groupsMap.values());
+        treeRef.value.expandAll();
+      }
+    };
 
+    fetchProjectTickedQuestions();
     const flattenedNodes = computed(() => {
       const nodes = [];
-
       const traverse = (node) => {
         if (node.children) {
-          const filteredChildren = node.children.filter(
-            (child) => child.ticked
-          );
-          filteredChildren.forEach(traverse);
+          node.children.forEach(traverse);
         }
-
-        if (node.description && node.ticked) {
+        if (node.description) {
           nodes.push(node);
         }
       };
-
-      groups.value.forEach((group) => {
-        traverse(group);
-      });
-
+      groups.value.forEach(traverse);
       return nodes;
     });
-
-    const submit = () => {
-      const reviewerNameDate = `Reviewer X - ${
-        new Date().toISOString().split("T")[0]
-      }`;
-
-      reviewerResponses.value.push({
-        name: "Reviewer X",
-        date: new Date().toISOString().split("T")[0],
-        response: reviewerResponse.value,
-        label: reviewerNameDate,
-      });
-
-      selectedReviewerResponse.value =
-        reviewerResponses.value[reviewerResponses.value.length - 1];
-    };
-
     const nextQuestion = () => {
       const currentIndex = flattenedNodes.value.findIndex(
         (node) => node.label === selected.value
@@ -290,82 +189,116 @@ export default {
       }
     };
 
-    const updateClientResponse = (selectedObject) => {
-      clientResponse.value = selectedObject ? selectedObject.response : "";
+    const submit = () => {
+      const clientNameDate = `Reviewer X - ${
+        new Date().toISOString().split("T")[0]
+      }`;
+
+      const response = {
+        name: "Reviewer X",
+        date: new Date().toISOString().split("T")[0],
+        response: reviewerComment.value,
+        label: clientNameDate,
+      };
+
+      if (!reviewerComments.value[selected.value]) {
+        reviewerComments.value[selected.value] = [];
+      }
+
+      reviewerComments.value[selected.value].push(response);
+
+      selectedReviewerComment.value = response;
+      nextQuestion();
     };
 
-    const updateReviewerResponse = (selectedObject) => {
-      reviewerResponse.value = selectedObject ? selectedObject.response : "";
+    const updateReviewerComment = (selectedObject) => {
+      reviewerComment.value = selectedObject ? selectedObject.response : "";
     };
 
-    onMounted(() => {
-      clientResponse.value = selectedClientResponse.value.response;
-      reviewerResponse.value = selectedReviewerResponse.value.response;
+    const updateClientAnswer = (selectedObject) => {
+      clientAnswer.value = selectedObject ? selectedObject.response : "";
+    };
+    onMounted(async () => {
+      try {
+        await nextTick();
+        fetchProjectTickedQuestions();
+      } catch (error) {
+        console.error(error);
+      }
     });
 
+    onMounted(() => {
+      if (reviewerComments.value[selected.value]) {
+        const latestResponse =
+          reviewerComments.value[selected.value][
+            reviewerComments.value[selected.value].length - 1
+          ];
+        reviewerComment.value = latestResponse.response;
+        selectedReviewerComment.value = latestResponse;
+      }
+    });
+    watch(
+      () => router.currentRoute.value,
+      async (newRoute) => {
+        projectId.value = newRoute.params.id;
+        await fetchProjectTickedQuestions();
+      }
+    );
+
+    watch(reviewerComments, (newVal) => {
+      if (newVal[selected.value]) {
+        selectedReviewerComment.value =
+          newVal[selected.value][newVal[selected.value].length - 1];
+      }
+    });
+    const reviewerResponses = computed(() => {
+      return reviewerComments.value[selected.value] || [];
+    });
+    watch(selected, (newVal) => {
+      if (reviewerComments.value[newVal]) {
+        const latestResponse =
+          reviewerComments.value[newVal][
+            reviewerComments.value[newVal].length - 1
+          ];
+        reviewerComment.value = latestResponse.response;
+        selectedReviewerComment.value = latestResponse;
+      } else {
+        reviewerComment.value = "";
+        selectedReviewerComment.value = null;
+      }
+    });
+
+    const latestClientAnswer = computed(() => {
+      return clientAnswers.value[clientAnswers.value.length - 1];
+    });
+    const projectName = ref("Test 1");
     const totalQuestions = ref(300);
     const clientToAnswer = ref(150);
     const adminToReview = ref(50);
-    const progress = ref(10); // You can calculate this based on your data
-    const exportOption = ref("With Reviewer Comments");
-
-    const exportData = () => {
-      const data = flattenedNodes.value
-        .map(
-          (node) => `
-        <h1>${node.label}</h1>
-        <p>${node.description}</p>
-        <p>${
-          clientResponses.value.find((response) => response.name === node.label)
-            ?.response || "No answer"
-        }</p>
-        ${
-          exportOption.value === "With Reviewer Comments"
-            ? `
-          <div style="border: 1px solid black; padding: 10px; margin-top: 10px;">
-            <strong>Reviewer:</strong>
-            <p>${
-              reviewerResponses.value.find(
-                (response) => response.name === node.label
-              )?.response || "No comment"
-            }</p>
-          </div>
-        `
-            : ""
-        }
-      `
-        )
-        .join("");
-
-      const exportWindow = window.open("", "_blank");
-      exportWindow.document.write(data);
-      exportWindow.document.close();
-    };
-
+    const status = ref(50); // You can calculate this based on your data
     return {
       splitterModel,
       selected,
       groups,
       flattenedNodes,
-      clientResponse,
-      reviewerResponse,
-      clientResponses,
-      reviewerResponses,
-      selectedClientResponse,
-      selectedReviewerResponse,
+      reviewerComment,
+      clientAnswer,
+      reviewerComments,
+      clientAnswers,
+      selectedReviewerComment,
+      selectedClientAnswer,
       submit,
       nextQuestion,
-      updateClientResponse,
-      updateReviewerResponse,
-      isLocked,
-      isComplete,
+      updateReviewerComment,
+      updateClientAnswer,
+      treeRef,
       projectName,
       totalQuestions,
       clientToAnswer,
       adminToReview,
-      progress,
-      exportOption,
-      exportData,
+      status,
+      reviewerResponses,
+      latestClientAnswer,
     };
   },
 };

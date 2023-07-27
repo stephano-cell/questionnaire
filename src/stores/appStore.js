@@ -400,6 +400,16 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error updating project question:", error);
         });
     },
+    //reviewproject
+    async fetchProjectTickedQuestions(projectId) {
+      const response = await axios.get(
+        `http://localhost:3000/projects/${projectId}/ticked-questions`
+      );
+      if (response.status === 200) {
+        return response.data;
+      }
+      throw new Error("Failed to fetch project ticked questions");
+    },
 
     logout() {
       console.log("Logout");
