@@ -410,6 +410,22 @@ export const useAppStore = defineStore("appStore", {
       }
       throw new Error("Failed to fetch project selected questions");
     },
+    submitComment(commentData) {
+      console.log("Submitting comment data:", commentData); // Log the commentData
+
+      return axios
+        .post("http://localhost:3000/projectsReviewerComments/new", commentData)
+        .then((response) => {
+          console.log("New comment submitted with ID:", response.data.id);
+          return { id: response.data.id };
+        })
+        .catch((error) => {
+          console.error(
+            "Error submitting new comment:",
+            error.response.data.error
+          );
+        });
+    },
 
     logout() {
       console.log("Logout");

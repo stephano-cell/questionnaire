@@ -253,5 +253,45 @@ router.get("/projects/:projectId/selected-questions", (req, res) => {
   );
 });
 
+// Create projectsReviewerComments table
+db.run(
+  `
+  CREATE TABLE IF NOT EXISTS projectsReviewerComments (
+    id TEXT PRIMARY KEY,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    comment TEXT,
+    projectQuestionId TEXT,
+    userId TEXT,
+    FOREIGN KEY(projectQuestionId) REFERENCES projectsQuestions(id),
+    FOREIGN KEY(userId) REFERENCES users(id)
+  )
+`,
+  (err) => {
+    if (err) {
+      console.error(
+        "Error creating projectsReviewerComments table: ",
+        err.message
+      );
+    }
+  }
+);
+// Add a new project reviewer comment
+router.post("/projectsReviewerComments/new", (req, res) => {
+  const { comment, projectQuestionId, userId } = req.body;
+
+  const commentId = uuidv4(); // Generate a new ID for the comment
+
+  db.run(
+    `INSERT INTO projectsReviewerComments(id, comment, projectQuestionId, userId) VALUES(?, ?, ?, ?)`,
+    [commentId, comment, projectQuestionId, userId],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(201).json({ id: commentId });
+    }
+  );
+});
+
 //Projects
 module.exports = router;

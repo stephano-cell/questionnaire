@@ -107,6 +107,10 @@ export default {
     const selected = ref(null);
     const reviewerComment = ref("");
     const treeRef = ref(null);
+    const authDataString = localStorage.getItem("auth");
+    const jsonString = authDataString.replace("__q_objt|", ""); // Remove the Quasar prefix
+    const authData = JSON.parse(jsonString);
+    const userId = authData.id;
 
     const clientAnswer = ref("");
 
@@ -157,6 +161,7 @@ export default {
           group.children.push({
             label: question.questionText,
             description: question.comment,
+            id: question.projectQuestionId,
           });
         });
         groups.value = Array.from(groupsMap.values());
@@ -204,27 +209,26 @@ export default {
         selected.value = flattenedNodes.value[nextIndex].label;
       }
     };
-
     const submit = () => {
-      const clientNameDate = `Reviewer X - ${
-        new Date().toISOString().split("T")[0]
-      }`;
-
-      const response = {
-        name: "Reviewer X",
-        date: new Date().toISOString().split("T")[0],
-        response: reviewerComment.value,
-        label: clientNameDate,
+      console.log("Selected question ID:", selected.value);
+      const selectedQuestion = flattenedNodes.value.find(
+        (node) => node.label === selected.value
+      );
+      const commentData = {
+        comment: reviewerComment.value,
+        projectQuestionId: selectedQuestion.id, // Use the id from projectsQuestions
+        userId: userId, // Use the actual user ID
       };
 
-      if (!reviewerComments.value[selected.value]) {
-        reviewerComments.value[selected.value] = [];
-      }
-
-      reviewerComments.value[selected.value].push(response);
-
-      selectedReviewerComment.value = response;
-      nextQuestion();
+      store
+        .submitComment(commentData)
+        .then((result) => {
+          console.log("Comment submitted with ID:", result.id);
+          nextQuestion();
+        })
+        .catch((error) => {
+          console.error("Error submitting comment:", error);
+        });
     };
 
     const updateReviewerComment = (selectedObject) => {
