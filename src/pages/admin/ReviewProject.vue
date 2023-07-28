@@ -138,11 +138,10 @@ export default {
     const router = useRouter();
     const projectId = ref(props.id);
 
-    const fetchProjectTickedQuestions = async () => {
+    const fetchProjectSelectedQuestions = async () => {
       if (projectId.value) {
-        const projectTickedQuestions = await store.fetchProjectTickedQuestions(
-          projectId.value
-        );
+        const projectTickedQuestions =
+          await store.fetchProjectSelectedQuestions(projectId.value);
         console.log(projectTickedQuestions); // Log the data
 
         // Convert the fetched data to the format q-tree expects
@@ -176,13 +175,13 @@ export default {
       try {
         await nextTick();
         fetchProjectDetails();
-        fetchProjectTickedQuestions();
+        fetchProjectSelectedQuestions();
       } catch (error) {
         console.error(error);
       }
     });
 
-    fetchProjectTickedQuestions();
+    fetchProjectSelectedQuestions();
     const flattenedNodes = computed(() => {
       const nodes = [];
       const traverse = (node) => {
@@ -238,7 +237,7 @@ export default {
     onMounted(async () => {
       try {
         await nextTick();
-        fetchProjectTickedQuestions();
+        fetchProjectSelectedQuestions();
       } catch (error) {
         console.error(error);
       }
@@ -258,7 +257,7 @@ export default {
       () => router.currentRoute.value,
       async (newRoute) => {
         projectId.value = newRoute.params.id;
-        await fetchProjectTickedQuestions();
+        await fetchProjectSelectedQuestions();
       }
     );
 

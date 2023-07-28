@@ -217,7 +217,7 @@ router.put("/projectsQuestions/:id", (req, res) => {
   );
 });
 
-router.get("/projects/:projectId/ticked-questions", (req, res) => {
+router.get("/projects/:projectId/selected-questions", (req, res) => {
   const projectId = req.params.projectId;
 
   db.all(

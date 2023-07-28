@@ -401,14 +401,14 @@ export const useAppStore = defineStore("appStore", {
         });
     },
     //reviewproject
-    async fetchProjectTickedQuestions(projectId) {
+    async fetchProjectSelectedQuestions(projectId) {
       const response = await axios.get(
-        `http://localhost:3000/projects/${projectId}/ticked-questions`
+        `http://localhost:3000/projects/${projectId}/selected-questions`
       );
       if (response.status === 200) {
         return response.data;
       }
-      throw new Error("Failed to fetch project ticked questions");
+      throw new Error("Failed to fetch project selected questions");
     },
 
     logout() {
