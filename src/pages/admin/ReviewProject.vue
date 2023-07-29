@@ -65,7 +65,7 @@
 
               <q-select
                 v-model="selectedReviewerComment"
-                :options="reviewerOptionComments"
+                :options="reviewerCommentsOptions"
                 label="Reviewer"
                 style="width: 200px"
                 class="q-mb-md"
@@ -111,10 +111,23 @@ export default {
     const jsonString = authDataString.replace("__q_objt|", ""); // Remove the Quasar prefix
     const authData = JSON.parse(jsonString);
     const userId = authData.id;
+    const reviewerComments = ref([]);
+    const selectedReviewerComment = ref({ label: "", value: { label: "" } });
+
+    const questionToReviewerComments = computed(() => {
+      const mapping = {};
+      flattenedNodes.value.forEach((node) => {
+        const projectQuestionId = node.id; // Get the projectQuestionId for each question
+        const comments = reviewerComments.value.filter(
+          (comment) => comment.projectQuestionId === projectQuestionId
+        );
+        mapping[node.label] = comments || [];
+      });
+      return mapping;
+    });
 
     const clientAnswer = ref("");
 
-    const reviewerComments = ref({});
     const clientAnswers = ref([
       {
         name: "Client 1",
@@ -122,17 +135,8 @@ export default {
         response: "Client Comment 1",
         label: "Client 1 - 2023-05-10",
       },
-      {
-        name: "Reviewer 2",
-        date: "2023-05-21",
-        response: "Client Comment 2",
-        label: "Client 2 - 2023-05-11",
-      },
     ]);
 
-    const selectedReviewerComment = ref(
-      reviewerComments.value[reviewerComments.value.length - 1]
-    );
     const selectedClientAnswer = ref(
       clientAnswers.value[clientAnswers.value.length - 1]
     );
@@ -175,6 +179,48 @@ export default {
         });
       }
     };
+    onMounted(async () => {
+      try {
+        await nextTick();
+        fetchProjectDetails();
+        fetchProjectSelectedQuestions();
+        store.fetchProjectReviewerComments(projectId.value).then((comments) => {
+          reviewerComments.value = comments;
+          console.log(
+            "reviewerCommentsOptions:",
+            reviewerCommentsOptions.value
+          );
+
+          console.log("flattenedNodes:", flattenedNodes.value);
+
+          if (flattenedNodes.value.length > 0) {
+            selected.value = flattenedNodes.value[0].label;
+
+            const selectedQuestionComments =
+              questionToReviewerComments.value[selected.value];
+            if (
+              selectedQuestionComments &&
+              selectedQuestionComments.length > 0
+            ) {
+              const latestResponse =
+                selectedQuestionComments[selectedQuestionComments.length - 1];
+              reviewerComment.value = latestResponse.comment;
+              selectedReviewerComment.value = latestResponse;
+            } else {
+              reviewerComment.value = "";
+              selectedReviewerComment.value = { label: "", value: "" };
+            }
+          }
+
+          console.log(
+            "selectedReviewerComment:",
+            selectedReviewerComment.value
+          );
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    });
 
     onMounted(async () => {
       try {
@@ -224,6 +270,14 @@ export default {
         .submitComment(commentData)
         .then((result) => {
           console.log("Comment submitted with ID:", result.id);
+
+          // Fetch the latest reviewer comments from the server
+          store
+            .fetchProjectReviewerComments(projectId.value)
+            .then((comments) => {
+              reviewerComments.value = comments;
+            });
+
           nextQuestion();
         })
         .catch((error) => {
@@ -231,10 +285,12 @@ export default {
         });
     };
 
-    const updateReviewerComment = (selectedObject) => {
-      reviewerComment.value = selectedObject ? selectedObject.response : "";
+    const updateReviewerComment = (newLabel) => {
+      const newComment = reviewerCommentsOptions.value.find(
+        (option) => option.label === newLabel
+      );
+      selectedReviewerComment.value = newComment || { label: "", value: "" };
     };
-
     const updateClientAnswer = (selectedObject) => {
       clientAnswer.value = selectedObject ? selectedObject.response : "";
     };
@@ -248,15 +304,25 @@ export default {
     });
 
     onMounted(() => {
-      if (reviewerComments.value[selected.value]) {
+      // Set the default 'selectedReviewerComment' to the latest comment submitted for the selected question
+      const selectedQuestionComments =
+        questionToReviewerComments.value[selected.value];
+      if (selectedQuestionComments && selectedQuestionComments.length > 0) {
         const latestResponse =
-          reviewerComments.value[selected.value][
-            reviewerComments.value[selected.value].length - 1
-          ];
-        reviewerComment.value = latestResponse.response;
-        selectedReviewerComment.value = latestResponse;
+          selectedQuestionComments[selectedQuestionComments.length - 1];
+        reviewerComment.value = latestResponse.comment;
+        selectedReviewerComment.value = {
+          label: `${latestResponse.userEmail} - ${new Date(
+            latestResponse.timestamp
+          ).toLocaleString()}`,
+          value: latestResponse.comment,
+        };
+      } else {
+        reviewerComment.value = "";
+        selectedReviewerComment.value = null;
       }
     });
+
     watch(
       () => router.currentRoute.value,
       async (newRoute) => {
@@ -265,15 +331,41 @@ export default {
       }
     );
 
-    watch(reviewerComments, (newVal) => {
-      if (newVal[selected.value]) {
-        selectedReviewerComment.value =
-          newVal[selected.value][newVal[selected.value].length - 1];
+    watch(selected, (newVal) => {
+      // Set the default 'selectedReviewerComment' to the latest comment submitted for the selected question
+      const selectedQuestionComments = questionToReviewerComments.value[newVal];
+      if (selectedQuestionComments && selectedQuestionComments.length > 0) {
+        const latestResponse =
+          selectedQuestionComments[selectedQuestionComments.length - 1];
+        reviewerComment.value = latestResponse.comment;
+        selectedReviewerComment.value = {
+          label: `${latestResponse.userEmail} - ${new Date(
+            latestResponse.timestamp
+          ).toLocaleString()}`,
+          value: latestResponse.comment,
+        };
+      } else {
+        reviewerComment.value = "";
+        selectedReviewerComment.value = null;
       }
     });
-    const reviewerOptionComments = computed(() => {
-      return reviewerComments.value[selected.value] || [];
+
+    const reviewerCommentsOptions = computed(() => {
+      if (!selected.value) {
+        // Return an empty array or handle the case when selected is null
+        return [];
+      }
+
+      const selectedQuestionComments =
+        questionToReviewerComments.value[selected.value];
+      return selectedQuestionComments.map((comment) => ({
+        label: `${comment.userEmail} - ${new Date(
+          comment.timestamp
+        ).toLocaleString()}`,
+        value: comment.comment, // Use comment.comment instead of comment
+      }));
     });
+
     watch(selected, (newVal) => {
       if (reviewerComments.value[newVal]) {
         const latestResponse =
@@ -306,6 +398,7 @@ export default {
       reviewerComments,
       clientAnswers,
       selectedReviewerComment,
+
       selectedClientAnswer,
       submit,
       nextQuestion,
@@ -317,8 +410,9 @@ export default {
       clientToAnswer,
       adminToReview,
       status,
-      reviewerOptionComments,
+      reviewerCommentsOptions,
       latestClientAnswer,
+      questionToReviewerComments,
     };
   },
 };

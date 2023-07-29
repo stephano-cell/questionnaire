@@ -12,6 +12,7 @@ export const useAppStore = defineStore("appStore", {
     template: [],
     projects: [],
     projectsQuestions: [],
+    reviewerComments: [],
   }),
 
   getters: {
@@ -433,6 +434,7 @@ export const useAppStore = defineStore("appStore", {
           `http://localhost:3000/projects/${projectId}/reviewer-comments`
         );
         console.log("Fetched reviewer comments:", response.data);
+        this.reviewerComments = response.data; // Store the comments in the state
         return response.data;
       } catch (error) {
         console.error("Error fetching reviewer comments:", error);
