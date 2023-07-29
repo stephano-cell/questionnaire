@@ -44,7 +44,10 @@
             <p v-html="node.description"></p>
             <div class="text-subtitle2 q-mb-xs">Client Answer</div>
             <br />
-            <div v-html="latestClientAnswer.response"></div>
+            <div
+              v-if="latestClientAnswer"
+              v-html="latestClientAnswer.response"
+            ></div>
 
             <q-select
               v-model="selectedClientAnswer"
@@ -128,18 +131,9 @@ export default {
 
     const clientAnswer = ref("");
 
-    const clientAnswers = ref([
-      {
-        name: "Client 1",
-        date: "2023-05-20",
-        response: "Client Comment 1",
-        label: "Client 1 - 2023-05-10",
-      },
-    ]);
+    const clientAnswers = ref([]);
 
-    const selectedClientAnswer = ref(
-      clientAnswers.value[clientAnswers.value.length - 1]
-    );
+    const selectedClientAnswer = ref({ label: "", value: { label: "" } });
 
     const groups = ref([]);
     const store = useAppStore();
@@ -319,14 +313,32 @@ export default {
             selectedReviewerComment.value
           );
         });
+        store
+          .fetchProjectClientAnswers(projectId.value)
+          .then((clientAnswerData) => {
+            clientAnswers.value = clientAnswerData.map((answer) => ({
+              label: `${answer.userEmail} - ${new Date(
+                answer.timestamp
+              ).toLocaleString()}`,
+              response: answer.comment,
+              value: answer.comment,
+            }));
+
+            selectedClientAnswer.value =
+              clientAnswers.value[clientAnswers.value.length - 1];
+          });
       } catch (error) {
         console.error(error);
       }
     });
 
     const latestClientAnswer = computed(() => {
-      return clientAnswers.value[clientAnswers.value.length - 1];
+      if (clientAnswers.value.length > 0) {
+        return clientAnswers.value[clientAnswers.value.length - 1];
+      }
+      return null;
     });
+
     const projectName = ref("Project Title");
     const totalQuestions = ref(300);
     const clientToAnswer = ref(150);
