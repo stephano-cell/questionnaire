@@ -284,13 +284,11 @@ export default {
           console.error("Error submitting comment:", error);
         });
     };
-
-    const updateReviewerComment = (newLabel) => {
-      const newComment = reviewerCommentsOptions.value.find(
-        (option) => option.label === newLabel
-      );
-      selectedReviewerComment.value = newComment || { label: "", value: "" };
+    const updateReviewerComment = (newVal) => {
+      selectedReviewerComment.value = newVal;
+      reviewerComment.value = newVal.value; // Use newVal.value to set the reviewer comment
     };
+
     const updateClientAnswer = (selectedObject) => {
       clientAnswer.value = selectedObject ? selectedObject.response : "";
     };
@@ -303,23 +301,30 @@ export default {
       }
     });
 
-    onMounted(() => {
-      // Set the default 'selectedReviewerComment' to the latest comment submitted for the selected question
-      const selectedQuestionComments =
-        questionToReviewerComments.value[selected.value];
-      if (selectedQuestionComments && selectedQuestionComments.length > 0) {
-        const latestResponse =
-          selectedQuestionComments[selectedQuestionComments.length - 1];
-        reviewerComment.value = latestResponse.comment;
-        selectedReviewerComment.value = {
-          label: `${latestResponse.userEmail} - ${new Date(
-            latestResponse.timestamp
-          ).toLocaleString()}`,
-          value: latestResponse.comment,
-        };
-      } else {
-        reviewerComment.value = "";
-        selectedReviewerComment.value = null;
+    onMounted(async () => {
+      try {
+        await nextTick();
+        fetchProjectDetails();
+        fetchProjectSelectedQuestions();
+        store.fetchProjectReviewerComments(projectId.value).then((comments) => {
+          reviewerComments.value = comments;
+          console.log(
+            "reviewerCommentsOptions:",
+            reviewerCommentsOptions.value
+          );
+          console.log("flattenedNodes:", flattenedNodes.value);
+
+          if (flattenedNodes.value.length > 0) {
+            selected.value = flattenedNodes.value[0].label;
+          }
+
+          console.log(
+            "selectedReviewerComment:",
+            selectedReviewerComment.value
+          );
+        });
+      } catch (error) {
+        console.error(error);
       }
     });
 

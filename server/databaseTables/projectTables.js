@@ -275,6 +275,7 @@ db.run(
     }
   }
 );
+
 // Add a new project reviewer comment
 router.post("/projectsReviewerComments/new", (req, res) => {
   const { comment, projectQuestionId, userId } = req.body;
@@ -323,6 +324,29 @@ router.get("/projects/:projectId/reviewer-comments", (req, res) => {
     }
   );
 });
+
+// Create projectsClientAnswers table
+db.run(
+  `
+  CREATE TABLE IF NOT EXISTS projectsClientAnswers (
+    id TEXT PRIMARY KEY,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    comment TEXT,
+    projectQuestionId TEXT,
+    userId TEXT,
+    FOREIGN KEY(projectQuestionId) REFERENCES projectsQuestions(id),
+    FOREIGN KEY(userId) REFERENCES users(id)
+  )
+`,
+  (err) => {
+    if (err) {
+      console.error(
+        "Error creating projectsClientAnswers table: ",
+        err.message
+      );
+    }
+  }
+);
 
 //Projects
 module.exports = router;
