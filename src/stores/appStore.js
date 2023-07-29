@@ -427,6 +427,19 @@ export const useAppStore = defineStore("appStore", {
         });
     },
 
+    async fetchProjectReviewerComments(projectId) {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/projects/${projectId}/reviewer-comments`
+        );
+        console.log("Fetched reviewer comments:", response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching reviewer comments:", error);
+        throw error;
+      }
+    },
+
     logout() {
       console.log("Logout");
       this.auth = null;

@@ -293,5 +293,36 @@ router.post("/projectsReviewerComments/new", (req, res) => {
   );
 });
 
+//get request for reviewer Commments
+
+router.get("/projects/:projectId/reviewer-comments", (req, res) => {
+  const projectId = req.params.projectId;
+
+  db.all(
+    `
+    SELECT
+      projectsReviewerComments.id as commentId, projectsReviewerComments.timestamp as timestamp,
+      projectsReviewerComments.comment as comment, projectsReviewerComments.projectQuestionId as projectQuestionId,
+      users.email as userEmail
+    FROM
+      projectsReviewerComments
+    INNER JOIN
+      users ON projectsReviewerComments.userId = users.id
+    INNER JOIN
+      projectsQuestions ON projectsReviewerComments.projectQuestionId = projectsQuestions.id
+    WHERE
+      projectsQuestions.projectId = ?
+    `,
+    [projectId],
+    (err, rows) => {
+      if (err) {
+        console.error("SQL error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      return res.status(200).json(rows);
+    }
+  );
+});
+
 //Projects
 module.exports = router;
