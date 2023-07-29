@@ -13,6 +13,7 @@ export const useAppStore = defineStore("appStore", {
     projects: [],
     projectsQuestions: [],
     reviewerComments: [],
+    clientAnswers: [],
   }),
 
   getters: {
@@ -438,6 +439,21 @@ export const useAppStore = defineStore("appStore", {
         return response.data;
       } catch (error) {
         console.error("Error fetching reviewer comments:", error);
+        throw error;
+      }
+    },
+
+    //client answers
+    async fetchProjectClientAnswers(projectId) {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/projects/${projectId}/client-answers`
+        );
+        console.log("Fetched client answers:", response.data);
+        this.clientAnswers = response.data; // Store the comments in the state
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching client answers:", error);
         throw error;
       }
     },
