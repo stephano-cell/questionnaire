@@ -65,7 +65,7 @@
 
               <q-select
                 v-model="selectedReviewerComment"
-                :options="reviewerResponses"
+                :options="reviewerOptionComments"
                 label="Reviewer"
                 style="width: 200px"
                 class="q-mb-md"
@@ -271,7 +271,7 @@ export default {
           newVal[selected.value][newVal[selected.value].length - 1];
       }
     });
-    const reviewerResponses = computed(() => {
+    const reviewerOptionComments = computed(() => {
       return reviewerComments.value[selected.value] || [];
     });
     watch(selected, (newVal) => {
@@ -317,7 +317,7 @@ export default {
       clientToAnswer,
       adminToReview,
       status,
-      reviewerResponses,
+      reviewerOptionComments,
       latestClientAnswer,
     };
   },
