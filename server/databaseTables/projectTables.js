@@ -348,5 +348,53 @@ db.run(
   }
 );
 
+// Add a new project client answer
+router.post("/projectsClientAnswers/new", (req, res) => {
+  const { comment, projectQuestionId, userId } = req.body;
+
+  const commentId = uuidv4(); // Generate a new ID for the comment
+
+  db.run(
+    `INSERT INTO projectsClientAnswers(id, comment, projectQuestionId, userId) VALUES(?, ?, ?, ?)`,
+    [commentId, comment, projectQuestionId, userId],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(201).json({ id: commentId });
+    }
+  );
+});
+
+//get request for client answers
+
+router.get("/projects/:projectId/client-answers", (req, res) => {
+  const projectId = req.params.projectId;
+
+  db.all(
+    `
+    SELECT
+    projectsClientAnswers.id as commentId, projectsClientAnswers.timestamp as timestamp,
+    projectsClientAnswers.comment as comment, projectsClientAnswers.projectQuestionId as projectQuestionId,
+      users.email as userEmail
+    FROM
+    projectsClientAnswers
+    INNER JOIN
+      users ON projectsClientAnswers.userId = users.id
+    INNER JOIN
+      projectsQuestions ON projectsClientAnswers.projectQuestionId = projectsQuestions.id
+    WHERE
+      projectsQuestions.projectId = ?
+    `,
+    [projectId],
+    (err, rows) => {
+      if (err) {
+        console.error("SQL error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      return res.status(200).json(rows);
+    }
+  );
+});
 //Projects
 module.exports = router;

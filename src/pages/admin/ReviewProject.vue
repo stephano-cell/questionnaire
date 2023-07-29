@@ -179,58 +179,6 @@ export default {
         });
       }
     };
-    onMounted(async () => {
-      try {
-        await nextTick();
-        fetchProjectDetails();
-        fetchProjectSelectedQuestions();
-        store.fetchProjectReviewerComments(projectId.value).then((comments) => {
-          reviewerComments.value = comments;
-          console.log(
-            "reviewerCommentsOptions:",
-            reviewerCommentsOptions.value
-          );
-
-          console.log("flattenedNodes:", flattenedNodes.value);
-
-          if (flattenedNodes.value.length > 0) {
-            selected.value = flattenedNodes.value[0].label;
-
-            const selectedQuestionComments =
-              questionToReviewerComments.value[selected.value];
-            if (
-              selectedQuestionComments &&
-              selectedQuestionComments.length > 0
-            ) {
-              const latestResponse =
-                selectedQuestionComments[selectedQuestionComments.length - 1];
-              reviewerComment.value = latestResponse.comment;
-              selectedReviewerComment.value = latestResponse;
-            } else {
-              reviewerComment.value = "";
-              selectedReviewerComment.value = { label: "", value: "" };
-            }
-          }
-
-          console.log(
-            "selectedReviewerComment:",
-            selectedReviewerComment.value
-          );
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    });
-
-    onMounted(async () => {
-      try {
-        await nextTick();
-        fetchProjectDetails();
-        fetchProjectSelectedQuestions();
-      } catch (error) {
-        console.error(error);
-      }
-    });
 
     fetchProjectSelectedQuestions();
     const flattenedNodes = computed(() => {
@@ -292,42 +240,6 @@ export default {
     const updateClientAnswer = (selectedObject) => {
       clientAnswer.value = selectedObject ? selectedObject.response : "";
     };
-    onMounted(async () => {
-      try {
-        await nextTick();
-        fetchProjectSelectedQuestions();
-      } catch (error) {
-        console.error(error);
-      }
-    });
-
-    onMounted(async () => {
-      try {
-        await nextTick();
-        fetchProjectDetails();
-        fetchProjectSelectedQuestions();
-        store.fetchProjectReviewerComments(projectId.value).then((comments) => {
-          reviewerComments.value = comments;
-          console.log(
-            "reviewerCommentsOptions:",
-            reviewerCommentsOptions.value
-          );
-          console.log("flattenedNodes:", flattenedNodes.value);
-
-          if (flattenedNodes.value.length > 0) {
-            selected.value = flattenedNodes.value[0].label;
-          }
-
-          console.log(
-            "selectedReviewerComment:",
-            selectedReviewerComment.value
-          );
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    });
-
     watch(
       () => router.currentRoute.value,
       async (newRoute) => {
@@ -370,18 +282,45 @@ export default {
         value: comment.comment, // Use comment.comment instead of comment
       }));
     });
+    onMounted(async () => {
+      try {
+        await nextTick();
+        fetchProjectDetails();
+        fetchProjectSelectedQuestions();
+        store.fetchProjectReviewerComments(projectId.value).then((comments) => {
+          reviewerComments.value = comments;
+          console.log(
+            "reviewerCommentsOptions:",
+            reviewerCommentsOptions.value
+          );
+          console.log("flattenedNodes:", flattenedNodes.value);
 
-    watch(selected, (newVal) => {
-      if (reviewerComments.value[newVal]) {
-        const latestResponse =
-          reviewerComments.value[newVal][
-            reviewerComments.value[newVal].length - 1
-          ];
-        reviewerComment.value = latestResponse.response;
-        selectedReviewerComment.value = latestResponse;
-      } else {
-        reviewerComment.value = "";
-        selectedReviewerComment.value = null;
+          if (flattenedNodes.value.length > 0) {
+            selected.value = flattenedNodes.value[0].label;
+
+            const selectedQuestionComments =
+              questionToReviewerComments.value[selected.value];
+            if (
+              selectedQuestionComments &&
+              selectedQuestionComments.length > 0
+            ) {
+              const latestResponse =
+                selectedQuestionComments[selectedQuestionComments.length - 1];
+              reviewerComment.value = latestResponse.comment;
+              selectedReviewerComment.value = latestResponse;
+            } else {
+              reviewerComment.value = "";
+              selectedReviewerComment.value = { label: "", value: "" };
+            }
+          }
+
+          console.log(
+            "selectedReviewerComment:",
+            selectedReviewerComment.value
+          );
+        });
+      } catch (error) {
+        console.error(error);
       }
     });
 
