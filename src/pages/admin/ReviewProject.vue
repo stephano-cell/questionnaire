@@ -340,7 +340,14 @@ export default {
     });
 
     const projectName = ref("Project Title");
-    const totalQuestions = ref(300);
+    const totalQuestions = computed(() => {
+      let count = 0;
+      groups.value.forEach((group) => {
+        count += group.children.length;
+      });
+      return count;
+    });
+
     const clientToAnswer = ref(150);
     const adminToReview = ref(50);
     const status = ref(50); // You can calculate this based on your data
