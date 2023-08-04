@@ -45,8 +45,8 @@
             <div class="text-subtitle2 q-mb-xs">Client Answer</div>
             <br />
             <div
-              v-if="latestClientAnswer"
-              v-html="latestClientAnswer.response"
+              v-if="selectedClientAnswer"
+              v-html="selectedClientAnswer.value"
             ></div>
 
             <q-select
@@ -116,7 +116,17 @@ export default {
     const userId = authData.id;
     const reviewerComments = ref([]);
     const selectedReviewerComment = ref({ label: "", value: { label: "" } });
-
+    const questionToClientAnswers = computed(() => {
+      const mapping = {};
+      flattenedNodes.value.forEach((node) => {
+        const projectQuestionId = node.id; // Get the projectQuestionId for each question
+        const answers = clientAnswers.value.filter(
+          (answer) => answer.projectQuestionId === projectQuestionId
+        );
+        mapping[node.label] = answers || [];
+      });
+      return mapping;
+    });
     const questionToReviewerComments = computed(() => {
       const mapping = {};
       flattenedNodes.value.forEach((node) => {
@@ -228,12 +238,14 @@ export default {
     };
     const updateReviewerComment = (newVal) => {
       selectedReviewerComment.value = newVal;
-      reviewerComment.value = newVal.value; // Use newVal.value to set the reviewer comment
+      reviewerComment.value = newVal.value; //
     };
 
     const updateClientAnswer = (selectedObject) => {
-      clientAnswer.value = selectedObject ? selectedObject.response : "";
+      selectedClientAnswer.value = selectedObject;
+      clientAnswer.value = selectedObject ? selectedObject.value : "";
     };
+
     watch(
       () => router.currentRoute.value,
       async (newRoute) => {
@@ -241,7 +253,6 @@ export default {
         await fetchProjectSelectedQuestions();
       }
     );
-
     watch(selected, (newVal) => {
       // Set the default 'selectedReviewerComment' to the latest comment submitted for the selected question
       const selectedQuestionComments = questionToReviewerComments.value[newVal];
@@ -257,7 +268,22 @@ export default {
         };
       } else {
         reviewerComment.value = "";
-        selectedReviewerComment.value = null;
+        selectedReviewerComment.value = { label: "", value: "" };
+      }
+      const selectedQuestionAnswers = questionToClientAnswers.value[newVal];
+      if (selectedQuestionAnswers && selectedQuestionAnswers.length > 0) {
+        const latestAnswer =
+          selectedQuestionAnswers[selectedQuestionAnswers.length - 1];
+        clientAnswer.value = latestAnswer.comment;
+        selectedClientAnswer.value = {
+          label: `${latestAnswer.userEmail} - ${new Date(
+            latestAnswer.timestamp
+          ).toLocaleString()}`,
+          value: latestAnswer.comment,
+        };
+      } else {
+        clientAnswer.value = "";
+        selectedClientAnswer.value = { label: "", value: "" };
       }
     });
 
@@ -320,12 +346,20 @@ export default {
               label: `${answer.userEmail} - ${new Date(
                 answer.timestamp
               ).toLocaleString()}`,
-              response: answer.comment,
-              value: answer.comment,
+              value: answer.comment, // Use 'answer' instead of 'response'
+
+              projectQuestionId: answer.projectQuestionId,
             }));
 
-            selectedClientAnswer.value =
-              clientAnswers.value[clientAnswers.value.length - 1];
+            const selectedQuestionAnswers =
+              questionToClientAnswers.value[selected.value];
+            if (selectedQuestionAnswers && selectedQuestionAnswers.length > 0) {
+              const latestAnswer =
+                selectedQuestionAnswers[selectedQuestionAnswers.length - 1];
+              selectedClientAnswer.value = latestAnswer;
+            } else {
+              selectedClientAnswer.value = { label: "", value: "" };
+            }
           });
       } catch (error) {
         console.error(error);
@@ -361,6 +395,7 @@ export default {
       reviewerComments,
       clientAnswers,
       selectedReviewerComment,
+      questionToClientAnswers,
 
       selectedClientAnswer,
       submit,
