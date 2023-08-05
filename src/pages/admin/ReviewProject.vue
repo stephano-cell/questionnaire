@@ -142,8 +142,7 @@ export default {
     const clientAnswer = ref("");
 
     const clientAnswers = ref([]);
-
-    const selectedClientAnswer = ref({ label: "", value: { label: "" } });
+    const selectedClientAnswer = ref({});
 
     const groups = ref([]);
     const store = useAppStore();
@@ -274,19 +273,19 @@ export default {
       if (selectedQuestionAnswers && selectedQuestionAnswers.length > 0) {
         const latestAnswer =
           selectedQuestionAnswers[selectedQuestionAnswers.length - 1];
-        clientAnswer.value = latestAnswer.comment;
+        console.log("latestAnswer:", latestAnswer);
         selectedClientAnswer.value = {
-          label: `${latestAnswer.userEmail} - ${new Date(
-            latestAnswer.timestamp
-          ).toLocaleString()}`,
-          value: latestAnswer.comment,
+          label: latestAnswer.label,
+          value: latestAnswer.value,
         };
       } else {
-        clientAnswer.value = "";
         selectedClientAnswer.value = { label: "", value: "" };
       }
+      console.log(
+        "updated selectedClientAnswer.value:",
+        selectedClientAnswer.value
+      );
     });
-
     const reviewerCommentsOptions = computed(() => {
       if (!selected.value) {
         // Return an empty array or handle the case when selected is null
@@ -346,7 +345,7 @@ export default {
               label: `${answer.userEmail} - ${new Date(
                 answer.timestamp
               ).toLocaleString()}`,
-              value: answer.comment, // Use 'answer' instead of 'response'
+              value: answer.comment,
 
               projectQuestionId: answer.projectQuestionId,
             }));
@@ -364,13 +363,6 @@ export default {
       } catch (error) {
         console.error(error);
       }
-    });
-
-    const latestClientAnswer = computed(() => {
-      if (clientAnswers.value.length > 0) {
-        return clientAnswers.value[clientAnswers.value.length - 1];
-      }
-      return null;
     });
 
     const projectName = ref("Project Title");
@@ -409,7 +401,7 @@ export default {
       adminToReview,
       status,
       reviewerCommentsOptions,
-      latestClientAnswer,
+
       questionToReviewerComments,
     };
   },
