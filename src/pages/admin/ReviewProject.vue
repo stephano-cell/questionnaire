@@ -131,6 +131,9 @@ export default {
         node.label.toLowerCase().includes(search.value.toLowerCase())
       );
     });
+    const selectedQuestion = computed(() => {
+      return flattenedNodes.value.find((node) => node.label === selected.value);
+    });
 
     const reviewerComment = ref("");
     const treeRef = ref(null);
@@ -142,8 +145,7 @@ export default {
       fetchProjectSelectedQuestions();
     };
     const reviewerComments = ref([]);
-    const lock = ref(false);
-    const completed = ref(false);
+
     const selectedReviewerComment = ref({ label: "", value: { label: "" } });
     const selectedQuestionAnswers = computed(() => {
       return questionToClientAnswers.value[selected.value] || [];
@@ -172,8 +174,8 @@ export default {
     });
 
     const clientAnswer = ref("");
-    const isLocked = ref("");
-    const isComplete = ref("");
+    const isLocked = ref(false);
+    const isComplete = ref(false);
 
     const clientAnswers = ref([]);
     const selectedClientAnswer = ref({});
@@ -336,6 +338,17 @@ export default {
         "updated selectedClientAnswer.value:",
         selectedClientAnswer.value
       );
+    });
+    watch(isLocked, (newIsLocked) => {
+      if (selectedQuestion.value) {
+        store.lockQuestion(selectedQuestion.value.id, newIsLocked);
+      }
+    });
+
+    watch(isComplete, (newIsComplete) => {
+      if (selectedQuestion.value) {
+        store.completeQuestion(selectedQuestion.value.id, newIsComplete);
+      }
     });
     const reviewerCommentsOptions = computed(() => {
       if (!selected.value) {

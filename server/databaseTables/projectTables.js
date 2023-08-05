@@ -253,6 +253,44 @@ router.get("/projects/:projectId/selected-questions", (req, res) => {
   );
 });
 
+// Update a project question's isLocked status
+router.put("/projectsQuestions/:id/lock", (req, res) => {
+  const { id } = req.params;
+  const { isLocked } = req.body;
+
+  db.run(
+    `UPDATE projectsQuestions SET isLocked = ? WHERE id = ?`,
+    [isLocked, id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res
+        .status(200)
+        .json({ message: "success", changes: this.changes });
+    }
+  );
+});
+
+// Update a project question's isCompleted status
+router.put("/projectsQuestions/:id/complete", (req, res) => {
+  const { id } = req.params;
+  const { isCompleted } = req.body;
+
+  db.run(
+    `UPDATE projectsQuestions SET isCompleted = ? WHERE id = ?`,
+    [isCompleted, id],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res
+        .status(200)
+        .json({ message: "success", changes: this.changes });
+    }
+  );
+});
+
 // Create projectsReviewerComments table
 db.run(
   `

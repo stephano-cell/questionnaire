@@ -442,6 +442,42 @@ export const useAppStore = defineStore("appStore", {
         throw error;
       }
     },
+    lockQuestion(questionId, isLocked) {
+      return axios
+        .put(`http://localhost:3000/projectsQuestions/${questionId}/lock`, {
+          isLocked,
+        })
+        .then((response) => {
+          console.log(
+            `Question ${questionId} locked status updated to: ${isLocked}`
+          );
+          return response.data;
+        })
+        .catch((error) => {
+          console.error(
+            `Error updating lock status for question ${questionId}:`,
+            error.response.data.error
+          );
+        });
+    },
+    completeQuestion(questionId, isCompleted) {
+      return axios
+        .put(`http://localhost:3000/projectsQuestions/${questionId}/complete`, {
+          isCompleted,
+        })
+        .then((response) => {
+          console.log(
+            `Question ${questionId} complete status updated to: ${isCompleted}`
+          );
+          return response.data;
+        })
+        .catch((error) => {
+          console.error(
+            `Error updating complete status for question ${questionId}:`,
+            error.response.data.error
+          );
+        });
+    },
 
     //client answers
     async fetchProjectClientAnswers(projectId) {
