@@ -22,7 +22,7 @@
           <q-tree
             ref="treeRef"
             :nodes="filteredGroups"
-            node-key="label"
+            node-key="id"
             selected-color="primary"
             v-model:selected="selected"
             default-expand-all
@@ -39,8 +39,8 @@
         >
           <q-tab-panel
             v-for="node in flattenedNodes"
-            :key="node.label"
-            :name="node.label"
+            :key="node.id"
+            :name="node.id"
           >
             <div class="text-h4 q-mb-md">{{ node.label }}</div>
             <p v-html="node.description"></p>
@@ -132,7 +132,7 @@ export default {
       );
     });
     const selectedQuestion = computed(() => {
-      return flattenedNodes.value.find((node) => node.label === selected.value);
+      return flattenedNodes.value.find((node) => node.id === selected.value);
     });
 
     const reviewerComment = ref("");
@@ -153,22 +153,22 @@ export default {
     const questionToClientAnswers = computed(() => {
       const mapping = {};
       flattenedNodes.value.forEach((node) => {
-        const projectQuestionId = node.id; // Get the projectQuestionId for each question
+        const projectQuestionId = node.id;
         const answers = clientAnswers.value.filter(
           (answer) => answer.projectQuestionId === projectQuestionId
         );
-        mapping[node.label] = answers || [];
+        mapping[node.id] = answers || [];
       });
       return mapping;
     });
     const questionToReviewerComments = computed(() => {
       const mapping = {};
       flattenedNodes.value.forEach((node) => {
-        const projectQuestionId = node.id; // Get the projectQuestionId for each question
+        const projectQuestionId = node.id;
         const comments = reviewerComments.value.filter(
           (comment) => comment.projectQuestionId === projectQuestionId
         );
-        mapping[node.label] = comments || [];
+        mapping[node.id] = comments || [];
       });
       return mapping;
     });
@@ -235,17 +235,17 @@ export default {
     });
     const nextQuestion = () => {
       const currentIndex = flattenedNodes.value.findIndex(
-        (node) => node.label === selected.value
+        (node) => node.id === selected.value
       );
       const nextIndex = currentIndex + 1;
       if (nextIndex < flattenedNodes.value.length) {
-        selected.value = flattenedNodes.value[nextIndex].label;
+        selected.value = flattenedNodes.value[nextIndex].id;
       }
     };
     const submit = () => {
       console.log("Selected question ID:", selected.value);
       const selectedQuestion = flattenedNodes.value.find(
-        (node) => node.label === selected.value
+        (node) => node.id === selected.value // use id to find selected question
       );
       const commentData = {
         comment: reviewerComment.value,
@@ -271,6 +271,7 @@ export default {
           console.error("Error submitting comment:", error);
         });
     };
+
     const updateReviewerComment = (newVal) => {
       selectedReviewerComment.value = newVal;
       reviewerComment.value = newVal.value; //
@@ -288,7 +289,7 @@ export default {
           );
           return { ...group, children: filteredChildren };
         })
-        .filter((group) => group.children.length > 0); // Only include groups with at least one child
+        .filter((group) => group.children.length > 0);
     });
 
     watch(
@@ -306,7 +307,6 @@ export default {
       }
     );
     watch(selected, (newVal) => {
-      // Set the default 'selectedReviewerComment' to the latest comment submitted for the selected question
       const selectedQuestionComments = questionToReviewerComments.value[newVal];
       if (selectedQuestionComments && selectedQuestionComments.length > 0) {
         const latestResponse =
@@ -352,7 +352,6 @@ export default {
     });
     const reviewerCommentsOptions = computed(() => {
       if (!selected.value) {
-        // Return an empty array or handle the case when selected is null
         return [];
       }
 
@@ -362,7 +361,7 @@ export default {
         label: `${comment.userEmail} - ${new Date(
           comment.timestamp
         ).toLocaleString()}`,
-        value: comment.comment, // Use comment.comment instead of comment
+        value: comment.comment,
       }));
     });
     onMounted(async () => {
