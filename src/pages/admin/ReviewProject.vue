@@ -79,13 +79,28 @@
             </div>
 
             <div class="q-mt-md">
+              <div class="q-mb-md">
+                <q-checkbox
+                  v-model="isLocked"
+                  color="primary"
+                  label="Lock"
+                  class="text-bold q-mr-md"
+                />
+                <q-checkbox
+                  v-model="isComplete"
+                  color="secondary"
+                  label="Complete"
+                  class="text-bold"
+                />
+              </div>
+
               <q-btn
                 label="Submit"
                 color="primary"
                 @click="submit"
                 class="q-mr-md"
               />
-              <q-btn label="Next" color="secondary" @click="nextQuestion" />
+              <q-btn label="Next" color="primary" @click="nextQuestion" />
             </div>
           </q-tab-panel>
         </q-tab-panels>
@@ -127,6 +142,8 @@ export default {
       fetchProjectSelectedQuestions();
     };
     const reviewerComments = ref([]);
+    const lock = ref(false);
+    const completed = ref(false);
     const selectedReviewerComment = ref({ label: "", value: { label: "" } });
     const selectedQuestionAnswers = computed(() => {
       return questionToClientAnswers.value[selected.value] || [];
@@ -155,6 +172,8 @@ export default {
     });
 
     const clientAnswer = ref("");
+    const isLocked = ref("");
+    const isComplete = ref("");
 
     const clientAnswers = ref([]);
     const selectedClientAnswer = ref({});
@@ -438,6 +457,8 @@ export default {
       reviewerCommentsOptions,
       resetSearch,
       questionToReviewerComments,
+      isLocked,
+      isComplete,
     };
   },
 };
