@@ -205,6 +205,8 @@ export default {
             label: question.questionText,
             description: question.comment,
             id: question.projectQuestionId,
+            isLocked: Boolean(question.isLocked), // Convert to boolean
+            isCompleted: Boolean(question.isCompleted), // Convert to boolean
           });
         });
         groups.value = Array.from(groupsMap.values());
@@ -306,7 +308,16 @@ export default {
         await fetchProjectSelectedQuestions();
       }
     );
-    watch(selected, (newVal) => {
+
+    watch(selected, async (newVal) => {
+      const selectedQuestion = flattenedNodes.value.find(
+        (node) => node.id === newVal
+      );
+      await fetchProjectSelectedQuestions();
+      if (selectedQuestion) {
+        isLocked.value = selectedQuestion.isLocked;
+        isCompleted.value = selectedQuestion.isCompleted;
+      }
       const selectedQuestionComments = questionToReviewerComments.value[newVal];
       if (selectedQuestionComments && selectedQuestionComments.length > 0) {
         const latestResponse =
