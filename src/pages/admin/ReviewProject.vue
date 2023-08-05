@@ -13,13 +13,15 @@
       </q-card-section>
     </q-card>
   </div>
+
   <div>
     <q-splitter v-model="splitterModel" style="height: 800px">
       <template v-slot:before>
         <div class="q-pa-md">
+          <q-input outlined v-model="search" label="Search" />
           <q-tree
             ref="treeRef"
-            :nodes="groups"
+            :nodes="filteredGroups"
             node-key="label"
             selected-color="primary"
             v-model:selected="selected"
@@ -108,12 +110,22 @@ export default {
   setup(props, context) {
     const splitterModel = ref(10);
     const selected = ref(null);
+    const search = ref("");
+    const filteredQuestions = computed(() => {
+      return flattenedNodes.value.filter((node) =>
+        node.label.toLowerCase().includes(search.value.toLowerCase())
+      );
+    });
+
     const reviewerComment = ref("");
     const treeRef = ref(null);
     const authDataString = localStorage.getItem("auth");
     const jsonString = authDataString.replace("__q_objt|", ""); // Remove the Quasar prefix
     const authData = JSON.parse(jsonString);
     const userId = authData.id;
+    const resetSearch = () => {
+      fetchProjectSelectedQuestions();
+    };
     const reviewerComments = ref([]);
     const selectedReviewerComment = ref({ label: "", value: { label: "" } });
     const selectedQuestionAnswers = computed(() => {
@@ -247,7 +259,24 @@ export default {
       selectedClientAnswer.value = selectedObject;
       clientAnswer.value = selectedObject ? selectedObject.value : "";
     };
+    const filteredGroups = computed(() => {
+      return groups.value
+        .map((group) => {
+          const filteredChildren = group.children.filter((child) =>
+            child.label.toLowerCase().includes(search.value.toLowerCase())
+          );
+          return { ...group, children: filteredChildren };
+        })
+        .filter((group) => group.children.length > 0); // Only include groups with at least one child
+    });
 
+    watch(
+      () => router.currentRoute.value,
+      async (newRoute) => {
+        projectId.value = newRoute.params.id;
+        await resetSearch();
+      }
+    );
     watch(
       () => router.currentRoute.value,
       async (newRoute) => {
@@ -385,6 +414,8 @@ export default {
       selected,
       groups,
       flattenedNodes,
+      search,
+      filteredQuestions,
       reviewerComment,
       clientAnswer,
       reviewerComments,
@@ -401,10 +432,11 @@ export default {
       projectName,
       totalQuestions,
       clientToAnswer,
+      filteredGroups,
       adminToReview,
       status,
       reviewerCommentsOptions,
-
+      resetSearch,
       questionToReviewerComments,
     };
   },
