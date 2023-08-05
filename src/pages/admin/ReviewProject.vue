@@ -51,7 +51,7 @@
 
             <q-select
               v-model="selectedClientAnswer"
-              :options="clientAnswers"
+              :options="selectedQuestionAnswers"
               label="Client"
               style="width: 200px"
               class="q-mb-md"
@@ -116,6 +116,9 @@ export default {
     const userId = authData.id;
     const reviewerComments = ref([]);
     const selectedReviewerComment = ref({ label: "", value: { label: "" } });
+    const selectedQuestionAnswers = computed(() => {
+      return questionToClientAnswers.value[selected.value] || [];
+    });
     const questionToClientAnswers = computed(() => {
       const mapping = {};
       flattenedNodes.value.forEach((node) => {
@@ -388,7 +391,7 @@ export default {
       clientAnswers,
       selectedReviewerComment,
       questionToClientAnswers,
-
+      selectedQuestionAnswers,
       selectedClientAnswer,
       submit,
       nextQuestion,
