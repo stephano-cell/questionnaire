@@ -87,7 +87,7 @@
                   class="text-bold q-mr-md"
                 />
                 <q-checkbox
-                  v-model="isComplete"
+                  v-model="isCompleted"
                   color="secondary"
                   label="Complete"
                   class="text-bold"
@@ -175,7 +175,7 @@ export default {
 
     const clientAnswer = ref("");
     const isLocked = ref(false);
-    const isComplete = ref(false);
+    const isCompleted = ref(false);
 
     const clientAnswers = ref([]);
     const selectedClientAnswer = ref({});
@@ -345,7 +345,7 @@ export default {
       }
     });
 
-    watch(isComplete, (newIsComplete) => {
+    watch(isCompleted, (newIsComplete) => {
       if (selectedQuestion.value) {
         store.completeQuestion(selectedQuestion.value.id, newIsComplete);
       }
@@ -470,7 +470,7 @@ export default {
       resetSearch,
       questionToReviewerComments,
       isLocked,
-      isComplete,
+      isCompleted,
     };
   },
 };

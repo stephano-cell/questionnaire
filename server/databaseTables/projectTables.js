@@ -219,7 +219,6 @@ router.put("/projectsQuestions/:id", (req, res) => {
 
 router.get("/projects/:projectId/selected-questions", (req, res) => {
   const projectId = req.params.projectId;
-
   db.all(
     `
     SELECT
@@ -228,6 +227,8 @@ router.get("/projects/:projectId/selected-questions", (req, res) => {
       templateGroups.id as groupId, templateGroups.groupName as groupName,
       templateQuestions.id as questionId, templateQuestions.questionTitle as questionText,
       projectsQuestions.isTicked as isTicked,
+      projectsQuestions.isLocked as isLocked,
+      projectsQuestions.isCompleted as isCompleted,
       projectsQuestions.id as projectQuestionId
     FROM
       projects
