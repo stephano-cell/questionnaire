@@ -543,7 +543,6 @@ export default {
                 };
                 const response = await store.postNewTemplateGroup(groupData);
                 group.id = response.data.id; // Update the group id with the id from the response
-                delete group.isNew; // Remove the isNew attribute
               } else {
                 // Update the existing group
                 const groupData = {
@@ -564,7 +563,6 @@ export default {
                     questionData
                   );
                   question.id = response.data.id; // Update the question id with the id from the response
-                  delete question.isNew; // Remove the isNew attribute
 
                   // Fetch all projects that use the current template
                   const projects = await store.fetchProjectsByTemplateId(
@@ -592,16 +590,6 @@ export default {
                 }
               }
             }
-            // Delete the groups and questions that have been marked for deletion
-            for (const groupId of deletedGroups.value) {
-              await store.deleteTemplateGroup(groupId);
-            }
-            for (const questionId of deletedQuestions.value) {
-              await store.deleteTemplateQuestion(questionId);
-            }
-            // Clear the lists of deleted groups and questions only after they have been deleted from the database
-            deletedGroups.value = [];
-            deletedQuestions.value = [];
 
             // All groups and questions are updated, navigate back
             router.back();

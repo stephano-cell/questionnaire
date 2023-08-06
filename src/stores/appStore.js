@@ -268,16 +268,7 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error updating group:", error);
         });
     },
-    deleteTemplateGroup(groupId) {
-      axios
-        .delete(`http://localhost:3000/templateGroups/${groupId}`)
-        .then(() => {
-          console.log(`Group ${groupId} deleted`);
-        })
-        .catch((error) => {
-          console.error("Error deleting group:", error);
-        });
-    },
+
     async updateTemplateQuestion(id, data) {
       await axios
         .put(`http://localhost:3000/templateQuestions/${id}`, data)
@@ -288,16 +279,7 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error updating question:", error);
         });
     },
-    deleteTemplateQuestion(questionId) {
-      axios
-        .delete(`http://localhost:3000/templateQuestions/${questionId}`)
-        .then(() => {
-          console.log(`Question ${questionId} deleted`);
-        })
-        .catch((error) => {
-          console.error("Error deleting question:", error);
-        });
-    },
+
     //createProject
     createProject(projectData) {
       return axios
