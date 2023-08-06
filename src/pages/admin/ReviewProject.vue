@@ -189,10 +189,10 @@ export default {
       if (projectId.value) {
         const projectTickedQuestions =
           await store.fetchProjectSelectedQuestions(projectId.value);
-        console.log(projectTickedQuestions); // Log the data
 
         // Convert the fetched data to the format q-tree expects
         const groupsMap = new Map();
+        let completedQuestions = 0;
         projectTickedQuestions.forEach((question) => {
           if (!groupsMap.has(question.groupId)) {
             groupsMap.set(question.groupId, {
@@ -208,11 +208,28 @@ export default {
             isLocked: Boolean(question.isLocked), // Convert to boolean
             isCompleted: Boolean(question.isCompleted), // Convert to boolean
           });
+
+          // If the question is completed, increment the completedQuestions counter
+          if (question.isCompleted) {
+            completedQuestions++;
+          }
         });
+
+        // Calculate the percentage of completed questions
+        const totalQuestions = projectTickedQuestions.length;
+        const completionPercentage = (
+          (completedQuestions / totalQuestions) *
+          100
+        ).toFixed(2);
+
+        // Set the status value
+        status.value = completionPercentage;
+
         groups.value = Array.from(groupsMap.values());
         treeRef.value.expandAll();
       }
     };
+
     const fetchProjectDetails = async () => {
       if (projectId.value) {
         store.fetchProject(projectId.value).then((project) => {
@@ -353,12 +370,14 @@ export default {
     watch(isLocked, (newIsLocked) => {
       if (selectedQuestion.value) {
         store.lockQuestion(selectedQuestion.value.id, newIsLocked);
+        fetchProjectSelectedQuestions();
       }
     });
 
     watch(isCompleted, (newIsComplete) => {
       if (selectedQuestion.value) {
         store.completeQuestion(selectedQuestion.value.id, newIsComplete);
+        fetchProjectSelectedQuestions();
       }
     });
     const reviewerCommentsOptions = computed(() => {
@@ -450,7 +469,7 @@ export default {
 
     const clientToAnswer = ref(150);
     const adminToReview = ref(50);
-    const status = ref(50); // You can calculate this based on your data
+    const status = ref(""); // You can calculate this based on your data
     return {
       splitterModel,
       selected,
