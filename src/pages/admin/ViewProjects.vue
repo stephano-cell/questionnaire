@@ -329,6 +329,7 @@ export default {
       createProject,
       projectDetails,
       updateProject,
+      fetchTemplateDetails,
     };
   },
 };
