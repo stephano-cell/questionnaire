@@ -104,7 +104,8 @@ router.get("/projects/:projectId/details", (req, res) => {
       projects.id as projectId, projects.name as projectName, projects.company as company, projects.comment as comment,
       template.id as templateId, template.name as templateName,
       templateGroups.id as groupId, templateGroups.groupName as groupName,
-      templateQuestions.id as questionId, templateQuestions.questionTitle as questionText,
+      templateQuestions.id as questionId, templateQuestions.questionTitle as questionTitle,
+      templateQuestions.questionDescription as questionDescription,
       projectsQuestions.isTicked as isTicked,
       projectsQuestions.id as projectQuestionId
     FROM
@@ -225,7 +226,8 @@ router.get("/projects/:projectId/selected-questions", (req, res) => {
       projects.id as projectId, projects.name as projectName, projects.company as company, projects.comment as comment,
       template.id as templateId, template.name as templateName,
       templateGroups.id as groupId, templateGroups.groupName as groupName,
-      templateQuestions.id as questionId, templateQuestions.questionTitle as questionText,
+      templateQuestions.id as questionId, templateQuestions.questionTitle as questionTitle,
+      templateQuestions.questionDescription as questionDescription,
       projectsQuestions.isTicked as isTicked,
       projectsQuestions.isLocked as isLocked,
       projectsQuestions.isCompleted as isCompleted,

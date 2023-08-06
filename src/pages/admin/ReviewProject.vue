@@ -201,9 +201,10 @@ export default {
             });
           }
           const group = groupsMap.get(question.groupId);
+          console.log(JSON.stringify(question, null, 2)); // Add this line
           group.children.push({
-            label: question.questionText,
-            description: question.comment,
+            label: question.questionTitle,
+            description: question.questionDescription,
             id: question.projectQuestionId,
             isLocked: Boolean(question.isLocked), // Convert to boolean
             isCompleted: Boolean(question.isCompleted), // Convert to boolean
@@ -228,6 +229,7 @@ export default {
         groups.value = Array.from(groupsMap.values());
         treeRef.value.expandAll();
       }
+      console.log(JSON.stringify(groups.value, null, 2)); // Add this line
     };
 
     const fetchProjectDetails = async () => {

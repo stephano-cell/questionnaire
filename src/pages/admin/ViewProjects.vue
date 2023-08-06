@@ -231,8 +231,9 @@ export default {
             label: groupDetails[0].groupName,
             children: groupDetails.map((question) => ({
               id: question.questionId,
-              label: question.questionText,
+              label: question.questionTitle,
               isTicked: question.isTicked,
+              description: question.questionDescription,
               projectQuestionId: question.projectQuestionId, // Add this line
             })),
           }));
