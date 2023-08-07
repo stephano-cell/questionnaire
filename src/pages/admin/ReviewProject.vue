@@ -20,6 +20,7 @@
         <div class="q-pa-md">
           <q-input outlined v-model="search" label="Search" />
           <q-tree
+            v-if="filteredGroups.length"
             :nodes="filteredGroups"
             node-key="id"
             selected-color="primary"
