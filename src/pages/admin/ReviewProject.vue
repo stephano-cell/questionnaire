@@ -200,10 +200,13 @@ export default {
     };
     const search = ref("");
     const filteredQuestions = computed(() => {
-      return flattenedNodes.value.filter((node) =>
-        node.label.toLowerCase().includes(search.value.toLowerCase())
+      return flattenedNodes.value.filter(
+        (node) =>
+          node.label.toLowerCase().includes(search.value.toLowerCase()) ||
+          node.description.toLowerCase().includes(search.value.toLowerCase())
       );
     });
+
     const selectedQuestion = computed(() => {
       return flattenedNodes.value.find((node) => node.id === selected.value);
     });
@@ -385,14 +388,18 @@ export default {
     const filteredGroups = computed(() => {
       let filtered = groups.value
         .map((group) => {
-          const filteredChildren = group.children.filter((child) =>
-            child.label.toLowerCase().includes(search.value.toLowerCase())
+          const filteredChildren = group.children.filter(
+            (child) =>
+              child.label.toLowerCase().includes(search.value.toLowerCase()) ||
+              child.description
+                .toLowerCase()
+                .includes(search.value.toLowerCase())
           );
           return { ...group, children: filteredChildren };
         })
         .filter((group) => group.children.length > 0)
         .map((group, index) => {
-          return { id: index, ...group }; // Add an id property to each group
+          return { id: index, ...group };
         });
 
       switch (currentFilter.value) {
