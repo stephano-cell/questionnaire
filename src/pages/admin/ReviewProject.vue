@@ -377,11 +377,12 @@ export default {
       }
     });
 
-    watch(isCompleted, (newIsComplete) => {
+    watch(isCompleted, async (newIsComplete) => {
       if (selectedQuestion.value) {
         store.completeQuestion(selectedQuestion.value.id, newIsComplete);
-        fetchProjectSelectedQuestions();
+        await fetchProjectSelectedQuestions();
       }
+      await fetchProjectSelectedQuestions();
     });
     const reviewerCommentsOptions = computed(() => {
       if (!selected.value) {
