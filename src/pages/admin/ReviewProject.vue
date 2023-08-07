@@ -8,7 +8,7 @@
       <q-card-section class="row items-center q-col-gutter-md">
         <div class="col">Total Questions: {{ totalQuestions }}</div>
         <div class="col">Client to Answer: {{ clientToAnswer }}</div>
-        <div class="col">Questions for Reviewer: {{ adminToReview }}</div>
+        <div class="col">Questions for Reviewer: {{ ReviewerToRespond }}</div>
         <div class="col">{{ status }}% Completed</div>
       </q-card-section>
     </q-card>
@@ -496,7 +496,37 @@ export default {
       return count;
     });
 
-    const adminToReview = ref(50);
+    const ReviewerToRespond = computed(() => {
+      let count = 0;
+      flattenedNodes.value.forEach((node) => {
+        const selectedQuestionAnswers = questionToClientAnswers.value[node.id];
+        const selectedQuestionComments =
+          questionToReviewerComments.value[node.id];
+
+        // Get the latest answer and response
+        const latestAnswer =
+          selectedQuestionAnswers && selectedQuestionAnswers.length > 0
+            ? selectedQuestionAnswers[selectedQuestionAnswers.length - 1]
+            : null;
+        const latestResponse =
+          selectedQuestionComments && selectedQuestionComments.length > 0
+            ? selectedQuestionComments[selectedQuestionComments.length - 1]
+            : null;
+
+        // Check if the answer timestamp is less than the response timestamp, or there is no client answer, and the question is not completed
+        if (
+          latestAnswer &&
+          (!latestResponse ||
+            new Date(latestAnswer.timestamp) >
+              new Date(latestResponse.timestamp)) &&
+          node.isCompleted != 1
+        ) {
+          count++;
+        }
+      });
+      return count;
+    });
+
     const status = ref("");
     return {
       splitterModel,
@@ -522,7 +552,7 @@ export default {
       totalQuestions,
       clientToAnswer,
       filteredGroups,
-      adminToReview,
+      ReviewerToRespond,
       status,
       reviewerCommentsOptions,
       resetSearch,
