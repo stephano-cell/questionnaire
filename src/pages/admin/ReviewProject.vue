@@ -18,7 +18,21 @@
     <q-splitter v-model="splitterModel" style="height: 800px">
       <template v-slot:before>
         <div class="q-pa-md">
-          <q-input outlined v-model="search" label="Search" />
+          <div class="row items-center">
+            <q-input outlined v-model="search" label="Search" class="col" />
+            <q-btn-dropdown ref="dropdown" label="Filter" class="col-auto">
+              <q-list style="width: 200px">
+                <q-item
+                  clickable
+                  v-for="filter in filters"
+                  :key="filter.value"
+                  @click="applyFilter(filter.value)"
+                >
+                  <q-item-section>{{ filter.label }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
+          </div>
           <q-tree
             v-if="filteredGroups.length"
             :nodes="filteredGroups"
@@ -126,6 +140,12 @@ export default {
   setup(props, context) {
     const splitterModel = ref(10);
     const selected = ref(null);
+    const currentFilter = ref(null);
+    const dropdown = ref(null);
+    const applyFilter = (filter) => {
+      currentFilter.value = filter;
+      dropdown.value.hide();
+    };
     const search = ref("");
     const filteredQuestions = computed(() => {
       return flattenedNodes.value.filter((node) =>
@@ -303,8 +323,15 @@ export default {
       selectedClientAnswer.value = selectedObject;
       clientAnswer.value = selectedObject ? selectedObject.value : "";
     };
+    const filters = [
+      { label: "Show All", value: "all" },
+      { label: "Completed", value: "completed" },
+      { label: "Not Completed", value: "notCompleted" },
+      { label: "Reviewer To Respond", value: "reviewerToRespond" },
+      { label: "Client To Answer", value: "clientToAnswer" },
+    ];
     const filteredGroups = computed(() => {
-      return groups.value
+      let filtered = groups.value
         .map((group) => {
           const filteredChildren = group.children.filter((child) =>
             child.label.toLowerCase().includes(search.value.toLowerCase())
@@ -315,6 +342,115 @@ export default {
         .map((group, index) => {
           return { id: index, ...group }; // Add an id property to each group
         });
+
+      switch (currentFilter.value) {
+        case "completed":
+          filtered = filtered
+            .map((group) => {
+              // Filter out the children that are completed
+              const completedChildren = group.children.filter(
+                (child) => child.isCompleted
+              );
+              return { ...group, children: completedChildren };
+            })
+            .filter((group) => group.children.length > 0); // Remove groups that have no children left after filtering
+          break;
+        case "notCompleted":
+          filtered = filtered
+            .map((group) => {
+              // Filter out the children that are not completed
+              const notCompletedChildren = group.children.filter(
+                (child) => !child.isCompleted
+              );
+              return { ...group, children: notCompletedChildren };
+            })
+            .filter((group) => group.children.length > 0); // Remove groups that have no children left after filtering
+          break;
+        case "reviewerToRespond":
+          filtered = filtered
+            .map((group) => {
+              // Filter out the children that require reviewer response
+              const reviewerToRespondChildren = group.children.filter(
+                (node) => {
+                  const selectedQuestionAnswers =
+                    questionToClientAnswers.value[node.id];
+                  const selectedQuestionComments =
+                    questionToReviewerComments.value[node.id];
+
+                  const latestAnswer =
+                    selectedQuestionAnswers &&
+                    selectedQuestionAnswers.length > 0
+                      ? selectedQuestionAnswers[
+                          selectedQuestionAnswers.length - 1
+                        ]
+                      : null;
+                  const latestResponse =
+                    selectedQuestionComments &&
+                    selectedQuestionComments.length > 0
+                      ? selectedQuestionComments[
+                          selectedQuestionComments.length - 1
+                        ]
+                      : null;
+
+                  return (
+                    latestAnswer &&
+                    (!latestResponse ||
+                      new Date(latestAnswer.timestamp) >
+                        new Date(latestResponse.timestamp)) &&
+                    node.isCompleted != 1
+                  );
+                }
+              );
+
+              return { ...group, children: reviewerToRespondChildren };
+            })
+            .filter((group) => group.children.length > 0); // Remove groups that have no children left after filtering
+          break;
+
+        case "clientToAnswer":
+          filtered = filtered
+            .map((group) => {
+              // Filter out the children that require client answer
+              const clientToAnswerChildren = group.children.filter((node) => {
+                const selectedQuestionAnswers =
+                  questionToClientAnswers.value[node.id];
+                const selectedQuestionComments =
+                  questionToReviewerComments.value[node.id];
+
+                const latestAnswer =
+                  selectedQuestionAnswers && selectedQuestionAnswers.length > 0
+                    ? selectedQuestionAnswers[
+                        selectedQuestionAnswers.length - 1
+                      ]
+                    : null;
+                const latestResponse =
+                  selectedQuestionComments &&
+                  selectedQuestionComments.length > 0
+                    ? selectedQuestionComments[
+                        selectedQuestionComments.length - 1
+                      ]
+                    : null;
+
+                return (
+                  (latestAnswer === null ||
+                    (latestAnswer &&
+                      latestResponse &&
+                      new Date(latestAnswer.timestamp) <
+                        new Date(latestResponse.timestamp))) &&
+                  node.isCompleted != 1
+                );
+              });
+
+              return { ...group, children: clientToAnswerChildren };
+            })
+            .filter((group) => group.children.length > 0); // Remove groups that have no children left after filtering
+          break;
+
+        default: // Show all
+          break;
+      }
+
+      return filtered;
     });
 
     watch(
@@ -562,6 +698,10 @@ export default {
       questionToReviewerComments,
       isLocked,
       isCompleted,
+      currentFilter,
+      filters,
+      dropdown,
+      applyFilter,
     };
   },
 };
