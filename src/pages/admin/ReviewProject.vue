@@ -202,7 +202,7 @@ export default {
             });
           }
           const group = groupsMap.get(question.groupId);
-          console.log(JSON.stringify(question, null, 2)); // Add this line
+
           group.children.push({
             label: question.questionTitle,
             description: question.questionDescription,
@@ -230,7 +230,6 @@ export default {
         groups.value = Array.from(groupsMap.values());
         treeRef.value.expandAll();
       }
-      console.log(JSON.stringify(groups.value, null, 2)); // Add this line
     };
 
     const fetchProjectDetails = async () => {
@@ -343,6 +342,7 @@ export default {
         const latestResponse =
           selectedQuestionComments[selectedQuestionComments.length - 1];
         reviewerComment.value = latestResponse.comment;
+
         selectedReviewerComment.value = {
           label: `${latestResponse.userEmail} - ${new Date(
             latestResponse.timestamp
@@ -357,7 +357,7 @@ export default {
       if (selectedQuestionAnswers && selectedQuestionAnswers.length > 0) {
         const latestAnswer =
           selectedQuestionAnswers[selectedQuestionAnswers.length - 1];
-        console.log("latestAnswer:", latestAnswer);
+
         selectedClientAnswer.value = {
           label: latestAnswer.label,
           value: latestAnswer.value,
@@ -406,11 +406,6 @@ export default {
         fetchProjectSelectedQuestions();
         store.fetchProjectReviewerComments(projectId.value).then((comments) => {
           reviewerComments.value = comments;
-          console.log(
-            "reviewerCommentsOptions:",
-            reviewerCommentsOptions.value
-          );
-          console.log("flattenedNodes:", flattenedNodes.value);
 
           if (flattenedNodes.value.length > 0) {
             selected.value = flattenedNodes.value[0].label;
@@ -423,6 +418,7 @@ export default {
             ) {
               const latestResponse =
                 selectedQuestionComments[selectedQuestionComments.length - 1];
+
               reviewerComment.value = latestResponse.comment;
               selectedReviewerComment.value = latestResponse;
             } else {
@@ -430,12 +426,8 @@ export default {
               selectedReviewerComment.value = { label: "", value: "" };
             }
           }
-
-          console.log(
-            "selectedReviewerComment:",
-            selectedReviewerComment.value
-          );
         });
+
         store
           .fetchProjectClientAnswers(projectId.value)
           .then((clientAnswerData) => {
@@ -444,7 +436,7 @@ export default {
                 answer.timestamp
               ).toLocaleString()}`,
               value: answer.comment,
-
+              timestamp: answer.timestamp,
               projectQuestionId: answer.projectQuestionId,
             }));
 
@@ -472,7 +464,38 @@ export default {
       return count;
     });
 
-    const clientToAnswer = ref(150);
+    const clientToAnswer = computed(() => {
+      let count = 0;
+      flattenedNodes.value.forEach((node) => {
+        const selectedQuestionAnswers = questionToClientAnswers.value[node.id];
+        const selectedQuestionComments =
+          questionToReviewerComments.value[node.id];
+
+        // Get the latest answer and response
+        const latestAnswer =
+          selectedQuestionAnswers && selectedQuestionAnswers.length > 0
+            ? selectedQuestionAnswers[selectedQuestionAnswers.length - 1]
+            : null;
+        const latestResponse =
+          selectedQuestionComments && selectedQuestionComments.length > 0
+            ? selectedQuestionComments[selectedQuestionComments.length - 1]
+            : null;
+
+        // Check if the answer timestamp is less than the response timestamp, or there is no client answer, and the question is not completed
+        if (
+          (latestAnswer === null ||
+            (latestAnswer &&
+              latestResponse &&
+              new Date(latestAnswer.timestamp) <
+                new Date(latestResponse.timestamp))) &&
+          node.isCompleted != 1
+        ) {
+          count++;
+        }
+      });
+      return count;
+    });
+
     const adminToReview = ref(50);
     const status = ref("");
     return {
