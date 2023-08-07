@@ -311,7 +311,10 @@ export default {
           );
           return { ...group, children: filteredChildren };
         })
-        .filter((group) => group.children.length > 0);
+        .filter((group) => group.children.length > 0)
+        .map((group, index) => {
+          return { id: index, ...group }; // Add an id property to each group
+        });
     });
 
     watch(
