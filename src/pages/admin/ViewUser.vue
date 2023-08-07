@@ -61,7 +61,7 @@
         v-model="allowLogin"
         label="Allow login"
       />
-      <template v-if="role === 'client'">
+      <template v-if="role === 'client' || role === 'reviewer'">
         <q-select
           filled
           v-model="project"
@@ -113,6 +113,7 @@ export default {
     const roles = [
       { label: "admin", value: "admin" },
       { label: "client", value: "client" },
+      { label: "reviewer", value: "reviewer" },
     ];
     if (props.mode === "new") {
       store.installActions([
