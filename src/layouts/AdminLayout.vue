@@ -4,13 +4,34 @@
       <q-toolbar style="display: flex">
         <q-btn
           class="q-mx-xs"
-          v-for="item in dynamicActions"
+          v-for="item in actionsWithoutSubmenu"
           v-bind:key="item.id"
           outline
           :disable="item.disable"
           @click="item.callback"
           >{{ item.label }}</q-btn
         >
+
+        <q-btn
+          class="q-mx-xs"
+          v-for="item in actionsWithSubmenu"
+          v-bind:key="item.id"
+          outline
+          :disable="item.disable"
+        >
+          {{ item.label }}
+          <q-menu>
+            <q-item
+              clickable
+              v-for="subitem in item.submenu"
+              :key="subitem.label"
+              @click="subitem.callback"
+            >
+              <q-item-section>{{ subitem.label }}</q-item-section>
+            </q-item>
+          </q-menu>
+        </q-btn>
+
         <q-toolbar-title style="flex-grow: 1; text-align: center"
           >VUestionnaire</q-toolbar-title
         >
@@ -54,11 +75,19 @@ export default defineComponent({
     const back = () => {
       router.back("/");
     };
+    const dynamicActions = computed(() => store.getActions);
+    const actionsWithoutSubmenu = computed(() => {
+      return dynamicActions.value.filter((action) => !action.submenu);
+    });
+    const actionsWithSubmenu = computed(() => {
+      return dynamicActions.value.filter((action) => action.submenu);
+    });
     return {
       logout,
       router,
       back,
-      dynamicActions: computed(() => store.getActions),
+      actionsWithoutSubmenu,
+      actionsWithSubmenu,
     };
   },
 });
