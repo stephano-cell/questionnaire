@@ -199,6 +199,7 @@ export default {
             groupsMap.set(question.groupId, {
               label: question.groupName,
               children: [],
+              selectable: false, // Parent nodes are not selectable
             });
           }
           const group = groupsMap.get(question.groupId);
@@ -209,6 +210,7 @@ export default {
             id: question.projectQuestionId,
             isLocked: Boolean(question.isLocked), // Convert to boolean
             isCompleted: Boolean(question.isCompleted), // Convert to boolean
+            selectable: true, // Child nodes are selectable
           });
 
           // If the question is completed, increment the completedQuestions counter
