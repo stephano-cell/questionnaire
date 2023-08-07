@@ -5,7 +5,27 @@
         <div class="text-h6">{{ projectName }}</div>
       </q-card-section>
       <q-separator />
-      <q-card-section class="row items-center q-col-gutter-md">
+      <q-card-section class="row items-center q-col-gutter-md justify-between">
+        <div class="row items-center">
+          <q-input
+            outlined
+            v-model="search"
+            label="Search"
+            class="col-6 q-mr-md"
+          />
+          <q-btn-dropdown ref="dropdown" label="Filter" class="col-auto">
+            <q-list style="width: 200px">
+              <q-item
+                clickable
+                v-for="filter in filters"
+                :key="filter.value"
+                @click="applyFilter(filter.value)"
+              >
+                <q-item-section>{{ filter.label }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-btn-dropdown>
+        </div>
         <div class="col">Total Questions: {{ totalQuestions }}</div>
         <div class="col">Client to Answer: {{ clientToAnswer }}</div>
         <div class="col">Questions for Reviewer: {{ ReviewerToRespond }}</div>
@@ -18,21 +38,6 @@
     <q-splitter v-model="splitterModel" style="height: 800px">
       <template v-slot:before>
         <div class="q-pa-md">
-          <div class="row items-center">
-            <q-input outlined v-model="search" label="Search" class="col" />
-            <q-btn-dropdown ref="dropdown" label="Filter" class="col-auto">
-              <q-list style="width: 200px">
-                <q-item
-                  clickable
-                  v-for="filter in filters"
-                  :key="filter.value"
-                  @click="applyFilter(filter.value)"
-                >
-                  <q-item-section>{{ filter.label }}</q-item-section>
-                </q-item>
-              </q-list>
-            </q-btn-dropdown>
-          </div>
           <q-tree
             v-if="filteredGroups.length"
             :nodes="filteredGroups"
@@ -56,11 +61,21 @@
             :key="node.id"
             :name="node.id"
           >
-            <div class="text-subtitle2 q-mb-xs">{{ node.label }}</div>
-            <br />
-            <p v-html="node.description"></p>
-            <hr />
-            <div class="text-subtitle2 q-mb-xs">Client Answer</div>
+            <div style="margin-bottom: 20px">
+              <div
+                style="border: 1px solid #1976d2; padding: 0px; max-width: 60%"
+              >
+                <div style="background-color: #1976d2; color: #fff">
+                  <h6 style="margin: 0; padding: 10px 10px 10px 10px">
+                    {{ node.label }}
+                  </h6>
+                </div>
+                <p
+                  style="margin-top: 10px; padding-left: 10px"
+                  v-html="node.description"
+                ></p>
+              </div>
+            </div>
             <br />
             <div
               v-if="selectedClientAnswer"
