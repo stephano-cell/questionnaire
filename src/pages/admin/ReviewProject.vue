@@ -11,7 +11,7 @@
             outlined
             v-model="search"
             label="Search"
-            class="col-6 q-mr-md"
+            class="col-5 q-mr-md"
           />
           <q-btn-dropdown ref="dropdown" label="Filter" class="col-auto">
             <q-list style="width: 200px">
