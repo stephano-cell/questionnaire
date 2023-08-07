@@ -190,7 +190,7 @@ export default {
   },
 
   setup(props, context) {
-    const splitterModel = ref(15);
+    const splitterModel = ref(10);
     const selected = ref(null);
     const currentFilter = ref(null);
     const dropdown = ref(null);
