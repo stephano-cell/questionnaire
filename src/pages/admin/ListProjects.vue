@@ -97,17 +97,17 @@ const columns = [
     sortable: true,
   },
   {
-    name: "last_admin_activity",
+    name: "lastReviewerActivity",
     align: "center",
-    label: "last_admin_activity",
-    field: "last_admin_activity",
+    label: "Last Reviewer Activity",
+    field: "lastReviewerActivity",
     sortable: true,
   },
   {
-    name: "adminToReview",
+    name: "reviewerToRespond",
     align: "center",
-    label: "Admin To Review",
-    field: "adminToReview",
+    label: "Reviewer To Respond",
+    field: "reviewerToRespond",
     sortable: true,
   },
   {
