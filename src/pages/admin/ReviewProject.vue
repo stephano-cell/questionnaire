@@ -370,11 +370,12 @@ export default {
         selectedClientAnswer.value
       );
     });
-    watch(isLocked, (newIsLocked) => {
+    watch(isLocked, async (newIsLocked) => {
       if (selectedQuestion.value) {
         store.lockQuestion(selectedQuestion.value.id, newIsLocked);
-        fetchProjectSelectedQuestions();
+        await fetchProjectSelectedQuestions();
       }
+      await fetchProjectSelectedQuestions();
     });
 
     watch(isCompleted, async (newIsComplete) => {
@@ -473,7 +474,7 @@ export default {
 
     const clientToAnswer = ref(150);
     const adminToReview = ref(50);
-    const status = ref(""); // You can calculate this based on your data
+    const status = ref("");
     return {
       splitterModel,
       selected,
