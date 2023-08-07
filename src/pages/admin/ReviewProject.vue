@@ -44,6 +44,7 @@
           >
             <div class="text-h4 q-mb-md">{{ node.label }}</div>
             <p v-html="node.description"></p>
+            <hr />
             <div class="text-subtitle2 q-mb-xs">Client Answer</div>
             <br />
             <div
