@@ -20,7 +20,6 @@
         <div class="q-pa-md">
           <q-input outlined v-model="search" label="Search" />
           <q-tree
-            ref="treeRef"
             :nodes="filteredGroups"
             node-key="id"
             selected-color="primary"
@@ -137,7 +136,7 @@ export default {
     });
 
     const reviewerComment = ref("");
-    const treeRef = ref(null);
+
     const authDataString = localStorage.getItem("auth");
     const jsonString = authDataString.replace("__q_objt|", ""); // Remove the Quasar prefix
     const authData = JSON.parse(jsonString);
@@ -230,7 +229,6 @@ export default {
         status.value = completionPercentage;
 
         groups.value = Array.from(groupsMap.values());
-        treeRef.value.expandAll();
       }
     };
 
@@ -549,7 +547,6 @@ export default {
       nextQuestion,
       updateReviewerComment,
       updateClientAnswer,
-      treeRef,
       projectName,
       totalQuestions,
       clientToAnswer,
