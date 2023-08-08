@@ -162,6 +162,7 @@ export default {
       let clientCount = 0;
       let reviewerCount = 0;
       let completedQuestions = 0;
+      let latestClientTimestamp = null;
 
       selectedQuestions.forEach((node) => {
         const selectedQuestionAnswers = clientAnswers.value.filter(
@@ -176,7 +177,14 @@ export default {
           selectedQuestionAnswers && selectedQuestionAnswers.length > 0
             ? selectedQuestionAnswers[selectedQuestionAnswers.length - 1]
             : null;
-
+        if (latestAnswer) {
+          if (
+            !latestClientTimestamp ||
+            new Date(latestAnswer.timestamp) > new Date(latestClientTimestamp)
+          ) {
+            latestClientTimestamp = latestAnswer.timestamp;
+          }
+        }
         const latestResponse =
           selectedQuestionComments && selectedQuestionComments.length > 0
             ? selectedQuestionComments[selectedQuestionComments.length - 1]
@@ -213,7 +221,12 @@ export default {
         100
       ).toFixed(2);
 
-      return { clientCount, reviewerCount, completionPercentage };
+      return {
+        clientCount,
+        reviewerCount,
+        completionPercentage,
+        latestClientTimestamp,
+      };
     }
 
     onMounted(async () => {
@@ -225,6 +238,7 @@ export default {
         project.clientToAnswer = responseCounts.clientCount;
         project.reviewerToRespond = responseCounts.reviewerCount;
         project.status = `${responseCounts.completionPercentage}%`;
+        project.lastClientActivity = responseCounts.latestClientTimestamp;
       }
 
       // Set the rows value with the complete project data
@@ -237,6 +251,7 @@ export default {
         clientToAnswer: project.clientToAnswer, // Include the computed clientToAnswer value
         reviewerToRespond: project.reviewerToRespond,
         status: project.status,
+        lastClientActivity: project.lastClientActivity,
       }));
     });
     store.installActions([
