@@ -131,4 +131,87 @@ router.post("/login", (req, res) => {
   });
 });
 
+// ...
+
+// Create the userProjects table
+db.run(
+  `CREATE TABLE IF NOT EXISTS userProjects(
+  userId TEXT,
+  projectId TEXT,
+  PRIMARY KEY(userId, projectId),
+  FOREIGN KEY(userId) REFERENCES users(id),
+  FOREIGN KEY(projectId) REFERENCES projects(id)
+)`,
+  (err) => {
+    if (err) {
+      return console.log(err.message);
+    }
+    console.log("userProjects table created");
+  }
+);
+
+// Assign projects to a user
+router.put("/users/:id/assign", (req, res) => {
+  const { id } = req.params;
+  const { projects } = req.body;
+  // Check for invalid project IDs
+  if (projects.some((p) => p === null || p === undefined)) {
+    return res.status(400).json({ error: "Invalid project IDs" });
+  }
+  const placeholders = projects.map(() => "(?, ?)").join(", ");
+  const values = projects.flatMap((projectId) => [id, projectId]);
+
+  db.run(
+    `INSERT OR IGNORE INTO userProjects(userId, projectId) VALUES ${placeholders}`,
+    values,
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json({ id });
+    }
+  );
+});
+
+// Unassign projects from a user
+router.put("/users/:id/unassign", (req, res) => {
+  const { id } = req.params;
+  const { projects } = req.body;
+
+  // Check for invalid project IDs
+  if (projects.some((p) => p === null || p === undefined)) {
+    return res.status(400).json({ error: "Invalid project IDs" });
+  }
+  const placeholders = projects.map(() => "?").join(", ");
+
+  db.run(
+    `DELETE FROM userProjects WHERE userId = ? AND projectId IN (${placeholders})`,
+    [id, ...projects],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(200).json({ id });
+    }
+  );
+});
+
+// Get projects assigned to a user
+router.get("/users/:id/projects", (req, res) => {
+  const { id } = req.params;
+
+  db.all(
+    `SELECT * FROM projects INNER JOIN userProjects ON projects.id = userProjects.projectId WHERE userProjects.userId = ?`,
+    [id],
+    (err, rows) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      return res.json(rows);
+    }
+  );
+});
+
+// ...
+
 module.exports = router;

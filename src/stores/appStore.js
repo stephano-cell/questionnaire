@@ -14,6 +14,7 @@ export const useAppStore = defineStore("appStore", {
     projectsQuestions: [],
     reviewerComments: [],
     clientAnswers: [],
+    assignedProjects: [],
   }),
 
   getters: {
@@ -310,6 +311,7 @@ export const useAppStore = defineStore("appStore", {
       return axios
         .get("http://localhost:3000/projects")
         .then((response) => {
+          console.log("Fetched projects:", response.data); // Log the fetched projects
           this.projects = response.data;
           return this.projects;
         })
@@ -474,6 +476,86 @@ export const useAppStore = defineStore("appStore", {
         console.error("Error fetching client answers:", error);
         throw error;
       }
+    },
+    //usersProjects
+
+    assignProjectsToUser(userId, projectObjects, isNewUser) {
+      // Extract just the IDs from the project objects
+      const projectIds = projectObjects.map((p) => p.id);
+      console.log(`Assigning projects to user ${userId}:`, projectIds);
+
+      // Filter out any undefined or null values
+      const validProjects = projectIds.filter(
+        (p) => p !== null && p !== undefined
+      );
+
+      if (!validProjects || validProjects.length === 0) {
+        console.log("No projects to assign.");
+        return;
+      }
+
+      let request;
+      let endpoint = `http://localhost:3000/users/${userId}/assign`; // Extracted endpoint to a variable for better logging
+      let payload = { projects: [...validProjects] };
+
+      if (isNewUser) {
+        // Use POST request for new users
+        console.log(
+          `Sending POST request to ${endpoint} with payload:`,
+          payload
+        );
+        request = axios.post(endpoint, payload);
+      } else {
+        // Use PUT request for existing users
+        console.log(
+          `Sending PUT request to ${endpoint} with payload:`,
+          payload
+        );
+        request = axios.put(endpoint, payload);
+      }
+
+      return request
+        .then((response) => {
+          console.log(`Projects assigned to user with ID: ${response.data.id}`);
+        })
+        .catch((error) => {
+          console.error("Error assigning projects to user:", error);
+        });
+    },
+
+    unassignProjectsFromUser(userId, projectIds) {
+      console.log(`Unassigning projects from user ${userId}:`, projectIds);
+
+      if (!projectIds || projectIds.length === 0) {
+        console.log("No projects to unassign.");
+        return;
+      }
+
+      return axios
+        .put(`http://localhost:3000/users/${userId}/unassign`, {
+          projects: projectIds,
+        })
+        .then((response) => {
+          console.log(
+            `Projects unassigned from user with ID: ${response.data.id}`
+          );
+        })
+        .catch((error) => {
+          console.error("Error unassigning projects from user:", error);
+        });
+    },
+
+    getProjectsAssignedToUser(userId) {
+      return axios
+        .get(`http://localhost:3000/users/${userId}/projects`)
+        .then((response) => {
+          console.log(`Fetched projects assigned to user with ID: ${userId}`);
+          this.assignedProjects = response.data; // Update the state
+          return response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching projects assigned to user:", error);
+        });
     },
 
     logout() {

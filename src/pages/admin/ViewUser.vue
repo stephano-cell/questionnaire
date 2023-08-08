@@ -66,12 +66,10 @@
           filled
           v-model="project"
           label="Project"
-          :options="sortedProjects"
-          multiple
-          emit-value
-          map-options
+          :options="projects"
           option-value="id"
-          option-label="projectName"
+          option-label="name"
+          multiple
           filter
           filter-placeholder="Search projects"
         />
@@ -80,7 +78,8 @@
   </q-page>
 </template>
 <script>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
+
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
 import { v4 } from "uuid";
@@ -100,6 +99,7 @@ export default {
     const store = useAppStore();
 
     const router = useRouter();
+    let prevProjects = [];
 
     const username = ref(null);
     const fullName = ref(null);
@@ -109,20 +109,50 @@ export default {
     const role = ref(null);
     const allowLogin = ref(false);
     const project = ref([]);
-
+    const projects = ref([]);
     const roles = [
       { label: "admin", value: "admin" },
       { label: "client", value: "client" },
       { label: "reviewer", value: "reviewer" },
     ];
+    onMounted(async () => {
+      // Fetch projects when the component is mounted
+      await store.fetchProjects();
+      projects.value = store.projects; // Assign the fetched projects to the projects ref
+
+      if (props.mode === "edit" && props.id) {
+        // If we are editing a user, fetch the projects assigned to the user
+        const assignedProjects = await store.getProjectsAssignedToUser(
+          props.id
+        );
+        project.value = assignedProjects.map((p) => p.id);
+      }
+    });
+
+    watch(
+      project,
+      (newProjects) => {
+        const removedProjects = prevProjects.filter(
+          (p) => p && !newProjects.includes(p)
+        );
+
+        if (removedProjects.length) {
+          store.unassignProjectsFromUser(props.id, removedProjects);
+        }
+
+        prevProjects = [...newProjects];
+      },
+      { immediate: true }
+    );
+
     if (props.mode === "new") {
       store.installActions([
         {
           label: "Insert",
-          callback: () => {
+          callback: async () => {
             const userId = v4();
 
-            store.insertNewUser({
+            await store.insertNewUser({
               id: userId,
               username: username.value,
               fullName: fullName.value,
@@ -132,6 +162,8 @@ export default {
               role: role.value,
               allowLogin: allowLogin.value,
             });
+
+            await store.assignProjectsToUser(userId, project.value, true);
 
             router.back();
           },
@@ -153,7 +185,7 @@ export default {
       store.installActions([
         {
           label: "Save",
-          callback: () => {
+          callback: async () => {
             const updatedUser = {
               id: props.id,
               username: username.value,
@@ -170,7 +202,12 @@ export default {
             }
 
             // Update the user
-            store.updateUser(props.id, updatedUser);
+            await store.updateUser(props.id, updatedUser);
+
+            // Assign the selected projects to the user, but only if the list is not empty
+            if (project.value.length > 0) {
+              await store.assignProjectsToUser(props.id, project.value, false);
+            }
 
             router.back();
           },
@@ -190,6 +227,8 @@ export default {
       roles,
       allowLogin,
       project,
+      projects,
+      prevProjects,
     };
   },
 };
