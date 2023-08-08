@@ -121,23 +121,25 @@ export default {
       projects.value = store.projects; // Assign the fetched projects to the projects ref
 
       if (props.mode === "edit" && props.id) {
-        // If we are editing a user, fetch the projects assigned to the user
         const assignedProjects = await store.getProjectsAssignedToUser(
           props.id
         );
-        project.value = assignedProjects.map((p) => p.id);
+        project.value = assignedProjects.map((p) => {
+          // find the full project object from projects based on the ID
+          return projects.value.find((proj) => proj.id === p.id);
+        });
       }
     });
 
     watch(
       project,
       (newProjects) => {
-        const removedProjects = prevProjects.filter(
-          (p) => p && !newProjects.includes(p)
-        );
+        const removedProjectsIds = prevProjects
+          .filter((p) => p && !newProjects.map((np) => np.id).includes(p.id))
+          .map((rp) => rp.id);
 
-        if (removedProjects.length) {
-          store.unassignProjectsFromUser(props.id, removedProjects);
+        if (removedProjectsIds.length) {
+          store.unassignProjectsFromUser(props.id, removedProjectsIds);
         }
 
         prevProjects = [...newProjects];
