@@ -163,14 +163,26 @@ export default {
       let reviewerCount = 0;
       let completedQuestions = 0;
       let latestClientTimestamp = null;
+      let latestReviewerTimestamp = null;
 
       selectedQuestions.forEach((node) => {
+        console.log("Node structure:", node);
         const selectedQuestionAnswers = clientAnswers.value.filter(
           (answer) => answer.projectQuestionId === node.projectQuestionId
         );
 
+        console.log("Node ID:", node.id);
+        console.log(
+          "All reviewer comments projectQuestionId values:",
+          reviewerComments.value.map((c) => c.projectQuestionId)
+        );
         const selectedQuestionComments = reviewerComments.value.filter(
-          (comment) => comment.projectQuestionId === node.id
+          (comment) => comment.projectQuestionId === node.projectQuestionId // Use node.projectQuestionId instead of node.id
+        );
+
+        console.log(
+          "Selected Question Comments Length:",
+          selectedQuestionComments.length
         );
 
         const latestAnswer =
@@ -189,6 +201,31 @@ export default {
           selectedQuestionComments && selectedQuestionComments.length > 0
             ? selectedQuestionComments[selectedQuestionComments.length - 1]
             : null;
+
+        console.log(
+          "Latest response for project:",
+          projectId,
+          "is:",
+          latestResponse
+        );
+
+        if (latestResponse) {
+          if (
+            !latestReviewerTimestamp ||
+            new Date(latestResponse.timestamp) >
+              new Date(latestReviewerTimestamp)
+          ) {
+            latestReviewerTimestamp = latestResponse.timestamp;
+            console.log(
+              "Updated latestReviewerTimestamp to:",
+              latestReviewerTimestamp
+            );
+          } else {
+            console.log(
+              "Did not update latestReviewerTimestamp because it's either already set or the new timestamp is older"
+            );
+          }
+        }
 
         // Count for client to answer
         if (
@@ -226,6 +263,7 @@ export default {
         reviewerCount,
         completionPercentage,
         latestClientTimestamp,
+        latestReviewerTimestamp,
       };
     }
 
@@ -239,20 +277,34 @@ export default {
         project.reviewerToRespond = responseCounts.reviewerCount;
         project.status = `${responseCounts.completionPercentage}%`;
         project.lastClientActivity = responseCounts.latestClientTimestamp;
+        project.lastReviewerActivity = responseCounts.latestReviewerTimestamp;
+        console.log(
+          "Assigned to project.lastReviewerActivity:",
+          project.lastReviewerActivity
+        );
       }
 
       // Set the rows value with the complete project data
-      rows.value = projects.map((project) => ({
-        id: project.id,
-        projectName: project.name, // Use project.name to match the data
-        company: project.company,
-        templateName: project.templateName,
-        comment: project.comment,
-        clientToAnswer: project.clientToAnswer, // Include the computed clientToAnswer value
-        reviewerToRespond: project.reviewerToRespond,
-        status: project.status,
-        lastClientActivity: project.lastClientActivity,
-      }));
+      rows.value = projects.map((project) => {
+        console.log(
+          "Mapped lastReviewerActivity for project:",
+          project.name,
+          "is:",
+          project.lastReviewerActivity
+        );
+        return {
+          id: project.id,
+          projectName: project.name, // Use project.name to match the data
+          company: project.company,
+          templateName: project.templateName,
+          comment: project.comment,
+          clientToAnswer: project.clientToAnswer, // Include the computed clientToAnswer value
+          reviewerToRespond: project.reviewerToRespond,
+          status: project.status,
+          lastClientActivity: project.lastClientActivity,
+          lastReviewerActivity: project.lastReviewerActivity,
+        };
+      });
     });
     store.installActions([
       {
