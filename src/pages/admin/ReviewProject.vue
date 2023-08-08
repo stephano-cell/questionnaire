@@ -55,6 +55,7 @@
           animated
           transition-prev="jump-up"
           transition-next="jump-up"
+          @wheel="handleScroll"
         >
           <q-tab-panel
             v-for="node in flattenedNodes"
@@ -147,11 +148,11 @@
 
             <div class="q-mt-md">
               <div class="q-mb-md">
-                <q-checkbox
-                  v-model="isLocked"
+                <q-btn
+                  label="Submit"
                   color="primary"
-                  label="Lock"
-                  class="text-bold q-mr-md"
+                  @click="submit"
+                  class="q-mr-md"
                 />
                 <q-checkbox
                   v-model="isCompleted"
@@ -159,15 +160,13 @@
                   label="Complete"
                   class="text-bold"
                 />
+                <q-checkbox
+                  v-model="isLocked"
+                  color="primary"
+                  label="Lock"
+                  class="text-bold q-mr-md"
+                />
               </div>
-
-              <q-btn
-                label="Submit"
-                color="primary"
-                @click="submit"
-                class="q-mr-md"
-              />
-              <q-btn label="Next" color="primary" @click="nextQuestion" />
             </div>
           </q-tab-panel>
         </q-tab-panels>
@@ -180,7 +179,7 @@
 import { ref, computed, nextTick, onMounted, watch } from "vue";
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
-import { v4 as uuidv4 } from "uuid";
+
 export default {
   props: {
     id: {
@@ -193,6 +192,23 @@ export default {
     const splitterModel = ref(10);
     const selected = ref(null);
     const currentFilter = ref(null);
+    const handleScroll = (event) => {
+      if (event.deltaY > 0) {
+        nextQuestion();
+      } else {
+        prevQuestion();
+      }
+    };
+    const prevQuestion = () => {
+      const currentIndex = flattenedNodes.value.findIndex(
+        (node) => node.id === selected.value
+      );
+      const prevIndex = currentIndex - 1;
+      if (prevIndex >= 0) {
+        selected.value = flattenedNodes.value[prevIndex].id;
+      }
+    };
+
     const dropdown = ref(null);
     const applyFilter = (filter) => {
       currentFilter.value = filter;
@@ -874,6 +890,8 @@ export default {
       filters,
       dropdown,
       applyFilter,
+      handleScroll,
+      prevQuestion,
     };
   },
 };
