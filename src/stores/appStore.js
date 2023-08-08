@@ -116,7 +116,7 @@ export const useAppStore = defineStore("appStore", {
         .then((response) => {
           console.log("Server response:", response.data);
           console.log("User updated with ID:", response.data.id);
-          // Update the usersData array in the store
+          // Update the usersData array in the storeserRecords() {
           const index = this.usersData.findIndex((u) => u.id === userId);
           if (index !== -1) {
             this.usersData.splice(index, 1, response.data);
@@ -131,13 +131,12 @@ export const useAppStore = defineStore("appStore", {
     },
 
     mapUserRecords() {
-      const usersData = this.usersData;
-
-      return usersData.map((user) => {
-        // Fetch the assigned projects for the user
-        axios;
-
-        return user;
+      return this.usersData.map((user) => {
+        const userWithProjects = this.fetchUserWithProjects(user.id);
+        return {
+          ...user,
+          project: userWithProjects.project.name,
+        };
       });
     },
 
@@ -541,6 +540,22 @@ export const useAppStore = defineStore("appStore", {
         .catch((error) => {
           console.error("Error fetching projects assigned to user:", error);
         });
+    },
+    async fetchUserWithProjects(id) {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/users/${id}/with-projects`
+        );
+        const userWithProjects = response.data;
+
+        // Ensure projectNames exists and is an array
+        userWithProjects.projectNames = userWithProjects.projectNames || [];
+
+        return userWithProjects;
+      } catch (error) {
+        console.error("Error fetching user with projects:", error);
+        throw error;
+      }
     },
 
     logout() {

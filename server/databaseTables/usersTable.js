@@ -213,6 +213,30 @@ router.get("/users/:id/projects", (req, res) => {
   );
 });
 
-// ...
+// Get a user with their assigned projects
+router.get("/users/:id/with-projects", (req, res) => {
+  const { id } = req.params;
+
+  db.all(
+    `SELECT users.*, GROUP_CONCAT(projects.name) as projectNames
+     FROM users
+     LEFT JOIN userProjects ON users.id = userProjects.userId
+     LEFT JOIN projects ON userProjects.projectId = projects.id
+     WHERE users.id = ?
+     GROUP BY users.id`,
+    [id],
+    (err, user) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      if (user) {
+        user.projectNames = user.projectNames
+          ? user.projectNames.split(",")
+          : [];
+      }
+      return res.json(user);
+    }
+  );
+});
 
 module.exports = router;

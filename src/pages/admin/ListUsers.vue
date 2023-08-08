@@ -34,10 +34,11 @@
         <template v-slot:body-cell-assigned_projects="props">
           <q-td :props="props">
             <div v-if="props.row.role == 'client'">
-              <div v-for="(project, index) in props.row.projects" :key="index">
+              <div v-for="project in props.row.projectNames" :key="project">
                 {{ project }}
               </div>
             </div>
+
             <span v-else>-</span>
           </q-td>
         </template>
@@ -80,15 +81,10 @@ const columns = [
   {
     name: "assigned_projects",
     label: "Assigned Projects",
-    field: "project",
-    format: (val) => {
-      if (val && val.length > 0) {
-        return `<q-select :options="${JSON.stringify(val)}" />`;
-      } else {
-        return "-";
-      }
-    },
+    field: (row) => row.projectNames,
+    sortable: true,
   },
+
   { name: "role", label: "role", field: "role", sortable: true },
   {
     name: "allowLogin",
@@ -118,16 +114,41 @@ export default {
     const tableRef = ref(null);
     const navigationActive = ref(false);
     const pagination = ref({});
+    const userRecords = ref([]);
+
     const selected = ref([]);
     const store = useAppStore();
+    const getUserWithProjects = (userId) => {
+      store
+        .fetchUserWithProjects(userId)
+        .then((user) => {
+          console.log("User with projects:", user);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    };
 
     const router = useRouter();
+    onMounted(async () => {
+      const users = await store.fetchUsers();
 
-    onMounted(() => {
-      store.fetchUsers();
+      const usersWithProjects = await Promise.all(
+        users.map(async (user) => {
+          const fetchedData = await store.fetchUserWithProjects(user.id);
+          const userWithProjects = fetchedData[0];
+
+          // Split projectNames into an array
+          userWithProjects.projectNames = userWithProjects.projectNames
+            ? userWithProjects.projectNames.split(",")
+            : [];
+
+          return userWithProjects;
+        })
+      );
+
+      userRecords.value = usersWithProjects;
     });
-
-    const userRecords = computed(() => store.mapUserRecords());
 
     store.installActions([
       {
@@ -146,6 +167,7 @@ export default {
       navigationActive,
       filter: ref(""),
       selected,
+      getUserWithProjects,
       pagination,
       columns,
       userRecords,
