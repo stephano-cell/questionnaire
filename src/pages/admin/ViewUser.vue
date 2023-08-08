@@ -61,7 +61,7 @@
         v-model="allowLogin"
         label="Allow login"
       />
-      <template v-if="role === 'client' || role === 'reviewer'">
+      <template v-if="role === 'client'">
         <q-select
           filled
           v-model="project"
