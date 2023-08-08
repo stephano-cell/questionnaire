@@ -152,47 +152,6 @@ export default {
       );
     }
 
-    async function computeClientToAnswer(projectId) {
-      await fetchProjectData(projectId); // Fetch the client answers and reviewer comments for the project
-
-      const selectedQuestions = await store.fetchProjectSelectedQuestions(
-        projectId
-      );
-      let count = 0;
-
-      selectedQuestions.forEach((node) => {
-        const selectedQuestionAnswers = clientAnswers.value.filter(
-          (answer) => answer.projectQuestionId === node.projectQuestionId
-        );
-
-        const selectedQuestionComments = reviewerComments.value.filter(
-          (comment) => comment.projectQuestionId === node.id
-        );
-
-        const latestAnswer =
-          selectedQuestionAnswers && selectedQuestionAnswers.length > 0
-            ? selectedQuestionAnswers[selectedQuestionAnswers.length - 1]
-            : null;
-
-        const latestResponse =
-          selectedQuestionComments && selectedQuestionComments.length > 0
-            ? selectedQuestionComments[selectedQuestionComments.length - 1]
-            : null;
-
-        if (
-          (latestAnswer === null ||
-            (latestAnswer &&
-              latestResponse &&
-              new Date(latestAnswer.timestamp) <
-                new Date(latestResponse.timestamp))) &&
-          node.isCompleted != 1
-        ) {
-          count++;
-        }
-      });
-
-      return count;
-    }
     async function computeResponsesCount(projectId) {
       await fetchProjectData(projectId);
 
@@ -202,6 +161,7 @@ export default {
 
       let clientCount = 0;
       let reviewerCount = 0;
+      let completedQuestions = 0;
 
       selectedQuestions.forEach((node) => {
         const selectedQuestionAnswers = clientAnswers.value.filter(
@@ -244,9 +204,16 @@ export default {
         ) {
           reviewerCount++;
         }
+        if (node.isCompleted === 1) {
+          completedQuestions++;
+        }
       });
+      const completionPercentage = (
+        (completedQuestions / selectedQuestions.length) *
+        100
+      ).toFixed(2);
 
-      return { clientCount, reviewerCount };
+      return { clientCount, reviewerCount, completionPercentage };
     }
 
     onMounted(async () => {
@@ -255,8 +222,9 @@ export default {
       // Compute the clientToAnswer value for each project
       for (let project of projects) {
         const responseCounts = await computeResponsesCount(project.id);
-        project.clientToAnswer = await computeClientToAnswer(project.id);
+        project.clientToAnswer = responseCounts.clientCount;
         project.reviewerToRespond = responseCounts.reviewerCount;
+        project.status = `${responseCounts.completionPercentage}%`;
       }
 
       // Set the rows value with the complete project data
@@ -268,6 +236,7 @@ export default {
         comment: project.comment,
         clientToAnswer: project.clientToAnswer, // Include the computed clientToAnswer value
         reviewerToRespond: project.reviewerToRespond,
+        status: project.status,
       }));
     });
     store.installActions([
