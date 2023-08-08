@@ -130,16 +130,6 @@ export const useAppStore = defineStore("appStore", {
       router.push(`/admin/user/edit/${info.id}`);
     },
 
-    mapUserRecords() {
-      return this.usersData.map((user) => {
-        const userWithProjects = this.fetchUserWithProjects(user.id);
-        return {
-          ...user,
-          project: userWithProjects.project.name,
-        };
-      });
-    },
-
     //templates
 
     fetchTemplates() {
@@ -541,23 +531,17 @@ export const useAppStore = defineStore("appStore", {
           console.error("Error fetching projects assigned to user:", error);
         });
     },
-    async fetchUserWithProjects(id) {
+    async fetchAllUsersWithProjects() {
       try {
         const response = await axios.get(
-          `http://localhost:3000/users/${id}/with-projects`
+          "http://localhost:3000/users-with-projects"
         );
-        const userWithProjects = response.data;
-
-        // Ensure projectNames exists and is an array
-        userWithProjects.projectNames = userWithProjects.projectNames || [];
-
-        return userWithProjects;
+        return response.data;
       } catch (error) {
-        console.error("Error fetching user with projects:", error);
+        console.error("Error fetching all users with projects:", error);
         throw error;
       }
     },
-
     logout() {
       console.log("Logout");
       this.auth = null;
