@@ -55,7 +55,7 @@
           animated
           transition-prev="jump-up"
           transition-next="jump-up"
-          @wheel="handleScroll"
+          @wheel="handleArrowKeys"
         >
           <q-tab-panel
             v-for="node in flattenedNodes"
@@ -176,7 +176,14 @@
 </template>
 
 <script>
-import { ref, computed, nextTick, onMounted, watch } from "vue";
+import {
+  ref,
+  computed,
+  nextTick,
+  onMounted,
+  watch,
+  onBeforeUnmount,
+} from "vue";
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
 
@@ -192,11 +199,14 @@ export default {
     const splitterModel = ref(10);
     const selected = ref(null);
     const currentFilter = ref(null);
-    const handleScroll = (event) => {
-      if (event.deltaY > 0) {
-        nextQuestion();
-      } else {
+    const handleArrowKeys = (event) => {
+      // Arrow up key
+      if (event.keyCode === 38) {
         prevQuestion();
+      }
+      // Arrow down key
+      else if (event.keyCode === 40) {
+        nextQuestion();
       }
     };
     const prevQuestion = () => {
@@ -664,6 +674,10 @@ export default {
             } else {
               selectedClientAnswer.value = { label: "", value: "" };
             }
+            document.addEventListener("keydown", handleArrowKeys);
+            const onBeforeUnmount = () => {
+              document.removeEventListener("keydown", handleArrowKeys);
+            };
           });
       } catch (error) {
         console.error(error);
@@ -890,8 +904,9 @@ export default {
       filters,
       dropdown,
       applyFilter,
-      handleScroll,
+      handleArrowKeys,
       prevQuestion,
+      onBeforeUnmount,
     };
   },
 };
