@@ -140,20 +140,136 @@ export default {
     const navigationActive = ref(false);
     const pagination = ref({});
     const store = useAppStore();
-
+    const clientAnswers = ref([]);
+    const reviewerComments = ref([]);
     const router = useRouter();
     const rows = ref([]);
+    async function fetchProjectData(projectId) {
+      clientAnswers.value = await store.fetchProjectClientAnswers(projectId);
+
+      reviewerComments.value = await store.fetchProjectReviewerComments(
+        projectId
+      );
+    }
+
+    async function computeClientToAnswer(projectId) {
+      await fetchProjectData(projectId); // Fetch the client answers and reviewer comments for the project
+
+      const selectedQuestions = await store.fetchProjectSelectedQuestions(
+        projectId
+      );
+      let count = 0;
+
+      selectedQuestions.forEach((node) => {
+        const selectedQuestionAnswers = clientAnswers.value.filter(
+          (answer) => answer.projectQuestionId === node.projectQuestionId
+        );
+
+        const selectedQuestionComments = reviewerComments.value.filter(
+          (comment) => comment.projectQuestionId === node.id
+        );
+
+        const latestAnswer =
+          selectedQuestionAnswers && selectedQuestionAnswers.length > 0
+            ? selectedQuestionAnswers[selectedQuestionAnswers.length - 1]
+            : null;
+
+        const latestResponse =
+          selectedQuestionComments && selectedQuestionComments.length > 0
+            ? selectedQuestionComments[selectedQuestionComments.length - 1]
+            : null;
+
+        if (
+          (latestAnswer === null ||
+            (latestAnswer &&
+              latestResponse &&
+              new Date(latestAnswer.timestamp) <
+                new Date(latestResponse.timestamp))) &&
+          node.isCompleted != 1
+        ) {
+          count++;
+        }
+      });
+
+      return count;
+    }
+    async function computeResponsesCount(projectId) {
+      await fetchProjectData(projectId);
+
+      const selectedQuestions = await store.fetchProjectSelectedQuestions(
+        projectId
+      );
+
+      let clientCount = 0;
+      let reviewerCount = 0;
+
+      selectedQuestions.forEach((node) => {
+        const selectedQuestionAnswers = clientAnswers.value.filter(
+          (answer) => answer.projectQuestionId === node.projectQuestionId
+        );
+
+        const selectedQuestionComments = reviewerComments.value.filter(
+          (comment) => comment.projectQuestionId === node.id
+        );
+
+        const latestAnswer =
+          selectedQuestionAnswers && selectedQuestionAnswers.length > 0
+            ? selectedQuestionAnswers[selectedQuestionAnswers.length - 1]
+            : null;
+
+        const latestResponse =
+          selectedQuestionComments && selectedQuestionComments.length > 0
+            ? selectedQuestionComments[selectedQuestionComments.length - 1]
+            : null;
+
+        // Count for client to answer
+        if (
+          (latestAnswer === null ||
+            (latestAnswer &&
+              latestResponse &&
+              new Date(latestAnswer.timestamp) <
+                new Date(latestResponse.timestamp))) &&
+          node.isCompleted != 1
+        ) {
+          clientCount++;
+        }
+
+        // Count for reviewer to respond
+        if (
+          latestAnswer &&
+          (!latestResponse ||
+            new Date(latestAnswer.timestamp) >
+              new Date(latestResponse.timestamp)) &&
+          node.isCompleted != 1
+        ) {
+          reviewerCount++;
+        }
+      });
+
+      return { clientCount, reviewerCount };
+    }
+
     onMounted(async () => {
       const projects = await store.fetchProjects();
+
+      // Compute the clientToAnswer value for each project
+      for (let project of projects) {
+        const responseCounts = await computeResponsesCount(project.id);
+        project.clientToAnswer = await computeClientToAnswer(project.id);
+        project.reviewerToRespond = responseCounts.reviewerCount;
+      }
+
+      // Set the rows value with the complete project data
       rows.value = projects.map((project) => ({
         id: project.id,
-        projectName: project.name,
+        projectName: project.name, // Use project.name to match the data
         company: project.company,
         templateName: project.templateName,
         comment: project.comment,
+        clientToAnswer: project.clientToAnswer, // Include the computed clientToAnswer value
+        reviewerToRespond: project.reviewerToRespond,
       }));
     });
-
     store.installActions([
       {
         label: "New Project",
@@ -170,6 +286,8 @@ export default {
       router,
       navigationActive,
       filter: ref(""),
+      clientAnswers,
+      reviewerComments,
       pagination,
       columns,
       rows,
