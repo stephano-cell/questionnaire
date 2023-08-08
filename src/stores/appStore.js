@@ -481,12 +481,10 @@ export const useAppStore = defineStore("appStore", {
     },
     //usersProjects
 
-    assignProjectsToUser(userId, projectObjects, isNewUser) {
-      // Extract just the IDs from the project objects
+    assignProjectsToUser(userId, projectObjects) {
       const projectIds = projectObjects.map((p) => p.id);
       console.log(`Assigning projects to user ${userId}:`, projectIds);
 
-      // Filter out any undefined or null values
       const validProjects = projectIds.filter(
         (p) => p !== null && p !== undefined
       );
@@ -496,27 +494,12 @@ export const useAppStore = defineStore("appStore", {
         return;
       }
 
-      let request;
-      let endpoint = `http://localhost:3000/users/${userId}/assign`; // Extracted endpoint to a variable for better logging
-      let payload = { projects: [...validProjects] };
+      const endpoint = `http://localhost:3000/users/${userId}/assign`;
+      const payload = { projects: [...validProjects] };
+      console.log(`Sending PUT request to ${endpoint} with payload:`, payload);
 
-      if (isNewUser) {
-        // Use POST request for new users
-        console.log(
-          `Sending POST request to ${endpoint} with payload:`,
-          payload
-        );
-        request = axios.post(endpoint, payload);
-      } else {
-        // Use PUT request for existing users
-        console.log(
-          `Sending PUT request to ${endpoint} with payload:`,
-          payload
-        );
-        request = axios.put(endpoint, payload);
-      }
-
-      return request
+      return axios
+        .put(endpoint, payload)
         .then((response) => {
           console.log(`Projects assigned to user with ID: ${response.data.id}`);
         })

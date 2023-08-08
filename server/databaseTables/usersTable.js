@@ -152,6 +152,7 @@ db.run(
 
 // Assign projects to a user
 router.put("/users/:id/assign", (req, res) => {
+  console.log("PUT /users/:id/assign -> Received data:", req.body);
   const { id } = req.params;
   const { projects } = req.body;
   // Check for invalid project IDs

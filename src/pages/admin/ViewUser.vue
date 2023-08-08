@@ -110,6 +110,7 @@ export default {
     const allowLogin = ref(false);
     const project = ref([]);
     const projects = ref([]);
+
     const roles = [
       { label: "admin", value: "admin" },
       { label: "client", value: "client" },
@@ -154,10 +155,6 @@ export default {
               role: role.value,
               allowLogin: allowLogin.value,
             });
-
-            await store.fetchProjects();
-            projects.value = store.projects;
-            await store.assignProjectsToUser(userId, project.value, true);
 
             router.back();
           },
