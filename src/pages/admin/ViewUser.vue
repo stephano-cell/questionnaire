@@ -61,7 +61,7 @@
         v-model="allowLogin"
         label="Allow login"
       />
-      <template v-if="role === 'client'">
+      <template v-if="role === 'client' && mode === 'edit'">
         <q-select
           filled
           v-model="project"
