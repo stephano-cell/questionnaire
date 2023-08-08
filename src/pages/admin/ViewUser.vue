@@ -118,17 +118,7 @@ export default {
     onMounted(async () => {
       // Fetch projects when the component is mounted
       await store.fetchProjects();
-      projects.value = store.projects; // Assign the fetched projects to the projects ref
-
-      if (props.mode === "edit" && props.id) {
-        const assignedProjects = await store.getProjectsAssignedToUser(
-          props.id
-        );
-        project.value = assignedProjects.map((p) => {
-          // find the full project object from projects based on the ID
-          return projects.value.find((proj) => proj.id === p.id);
-        });
-      }
+      projects.value = store.projects;
     });
 
     watch(
@@ -165,6 +155,8 @@ export default {
               allowLogin: allowLogin.value,
             });
 
+            await store.fetchProjects();
+            projects.value = store.projects;
             await store.assignProjectsToUser(userId, project.value, true);
 
             router.back();
@@ -173,16 +165,32 @@ export default {
       ]);
     } else if (props.mode === "edit") {
       if (!props.id) return alert("No user ID provided");
-      const user = store.getUserByID(props.id);
 
-      if (!user) return alert("User ID not found");
+      onMounted(async () => {
+        // Fetch projects when the component is mounted
+        await store.fetchProjects();
+        projects.value = store.projects;
 
-      username.value = user.username;
-      fullName.value = user.fullName;
-      email.value = user.email;
-      companyName.value = user.companyName;
-      role.value = user.role;
-      allowLogin.value = user.allowLogin;
+        // Fetch the user data
+        await store.fetchUsers();
+
+        const user = store.getUserByID(props.id);
+        if (!user) return alert("User ID not found");
+
+        username.value = user.username;
+        fullName.value = user.fullName;
+        email.value = user.email;
+        companyName.value = user.companyName;
+        role.value = user.role;
+        allowLogin.value = user.allowLogin;
+
+        const assignedProjects = await store.getProjectsAssignedToUser(
+          props.id
+        );
+        project.value = assignedProjects.map((p) => {
+          return projects.value.find((proj) => proj.id === p.id);
+        });
+      });
 
       store.installActions([
         {

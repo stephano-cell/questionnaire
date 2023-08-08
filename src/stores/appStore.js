@@ -48,16 +48,18 @@ export const useAppStore = defineStore("appStore", {
       }
     },
 
-    fetchUsers() {
-      axios
+    async fetchUsers() {
+      return axios
         .get("http://localhost:3000/users")
         .then((response) => {
           this.usersData = response.data;
+          return response.data;
         })
         .catch((error) => {
-          console.error("Error fetching users:", error);
+          console.error("Error fetching template:", error);
         });
     },
+
     insertNewUser(user, selectedProjects) {
       // Create a new user and insert it into the database
       axios
