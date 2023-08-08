@@ -182,7 +182,8 @@ export default {
         email.value = user.email;
         companyName.value = user.companyName;
         role.value = user.role;
-        allowLogin.value = user.allowLogin;
+        console.log("allowLogin from user:", user.allowLogin);
+        allowLogin.value = user.allowLogin === 1 ? true : false;
 
         const assignedProjects = await store.getProjectsAssignedToUser(
           props.id
