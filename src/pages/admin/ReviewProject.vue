@@ -210,12 +210,12 @@ export default {
       }
     };
     const prevQuestion = () => {
-      const currentIndex = flattenedNodes.value.findIndex(
+      const currentIndex = filteredFlattenedNodes.value.findIndex(
         (node) => node.id === selected.value
       );
       const prevIndex = currentIndex - 1;
       if (prevIndex >= 0) {
-        selected.value = flattenedNodes.value[prevIndex].id;
+        selected.value = filteredFlattenedNodes.value[prevIndex].id;
       }
     };
 
@@ -357,12 +357,12 @@ export default {
       return nodes;
     });
     const nextQuestion = () => {
-      const currentIndex = flattenedNodes.value.findIndex(
+      const currentIndex = filteredFlattenedNodes.value.findIndex(
         (node) => node.id === selected.value
       );
       const nextIndex = currentIndex + 1;
-      if (nextIndex < flattenedNodes.value.length) {
-        selected.value = flattenedNodes.value[nextIndex].id;
+      if (nextIndex < filteredFlattenedNodes.value.length) {
+        selected.value = filteredFlattenedNodes.value[nextIndex].id;
       }
     };
     const submit = () => {
@@ -536,6 +536,20 @@ export default {
       }
 
       return filtered;
+    });
+
+    const filteredFlattenedNodes = computed(() => {
+      const nodes = [];
+      const traverse = (node) => {
+        if (node.children) {
+          node.children.forEach(traverse);
+        }
+        if (node.description) {
+          nodes.push(node);
+        }
+      };
+      filteredGroups.value.forEach(traverse);
+      return nodes;
     });
 
     watch(
