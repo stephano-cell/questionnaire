@@ -348,7 +348,7 @@ export const useAppStore = defineStore("appStore", {
     },
     //client
     answerProject(router, info) {
-      router.push(`/client/AnswerProjectsClient/${info.id}`);
+      router.push(`/session/answer/${info.id}`);
     },
 
     updateProject(projectId, updatedProject) {

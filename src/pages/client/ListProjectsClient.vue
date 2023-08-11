@@ -40,7 +40,7 @@
 
         <template v-slot:body-cell-review="props">
           <q-td :props="props">
-            <q-btn flat icon="preview" @click="reviewProject(props.row)" />
+            <q-btn flat icon="preview" @click="answerProject(props.row)" />
           </q-td>
         </template>
       </q-table>
@@ -279,14 +279,6 @@ export default {
         };
       });
     });
-    store.installActions([
-      {
-        label: "New Project",
-        callback: () => {
-          router.push("/admin/project/new");
-        },
-      },
-    ]);
 
     return {
       tableRef,
@@ -300,8 +292,8 @@ export default {
       pagination,
       columns,
       rows,
-      reviewProject(info) {
-        store.reviewProject(router, info);
+      answerProject(info) {
+        store.answerProject(router, info);
       },
 
       tableClass: computed(() =>
