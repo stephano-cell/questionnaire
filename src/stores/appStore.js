@@ -474,6 +474,25 @@ export const useAppStore = defineStore("appStore", {
         throw error;
       }
     },
+
+    //client submit answer
+    submitAnswer(answerData) {
+      console.log("Submitting answer data:", answerData); // Log the commentData
+
+      return axios
+        .post("http://localhost:3000/projectsClientAnswers/new", answerData)
+        .then((response) => {
+          console.log("New comment submitted with ID:", response.data.id);
+          return { id: response.data.id };
+        })
+        .catch((error) => {
+          console.error(
+            "Error submitting new answer:",
+            error.response.data.error
+          );
+        });
+    },
+
     //usersProjects
 
     assignProjectsToUser(userId, projectObjects) {
