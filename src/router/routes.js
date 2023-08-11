@@ -109,8 +109,11 @@ const routes = [
         component: () => import("pages/client/ListProjectsClient.vue"),
       },
       {
-        path: "answer",
+        path: "answer/:id",
         component: () => import("pages/client/AnswerProjectsClient.vue"),
+        props: (route) => ({
+          id: route.params.id,
+        }),
       },
     ],
   },
