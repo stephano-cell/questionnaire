@@ -48,7 +48,8 @@
   </q-page>
 </template>
 <script>
-import { ref, computed, nextTick, toRaw, onMounted, watch } from "vue";
+import { ref, computed, nextTick, toRaw, onMounted } from "vue";
+import { LocalStorage } from "quasar";
 
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
@@ -117,6 +118,7 @@ export default {
     const reviewerComments = ref([]);
     const router = useRouter();
     const rows = ref([]);
+    const userId = ref(LocalStorage.getItem("auth")?.id);
     async function fetchProjectData(projectId) {
       clientAnswers.value = await store.fetchProjectClientAnswers(projectId);
 
@@ -241,7 +243,17 @@ export default {
     }
 
     onMounted(async () => {
-      const projects = await store.fetchProjects();
+      // Fetch the logged-in client's ID from local storage
+      const userId = LocalStorage.getItem("auth")?.id;
+
+      // If there's no userId, we might want to redirect the user or show an error
+      if (!userId) {
+        console.error("User is not authenticated or user ID is missing.");
+        return;
+      }
+
+      // Fetch only the projects assigned to the logged-in client
+      const projects = await store.getProjectsAssignedToUser(userId);
 
       // Compute the clientToAnswer value for each project
       for (let project of projects) {
@@ -268,9 +280,7 @@ export default {
         return {
           id: project.id,
           projectName: project.name, // Use project.name to match the data
-          company: project.company,
-          templateName: project.templateName,
-          comment: project.comment,
+
           clientToAnswer: project.clientToAnswer, // Include the computed clientToAnswer value
           reviewerToRespond: project.reviewerToRespond,
           status: project.status,
@@ -283,7 +293,7 @@ export default {
     return {
       tableRef,
       store,
-
+      userId,
       router,
       navigationActive,
       filter: ref(""),
