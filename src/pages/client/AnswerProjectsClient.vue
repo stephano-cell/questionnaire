@@ -77,21 +77,6 @@
                 ></p>
               </div>
             </div>
-            <br />
-            <div
-              v-if="selectedReviewerComment"
-              v-html="selectedReviewerComment.value"
-            ></div>
-
-            <q-select
-              v-model="selectedReviewerComment"
-              :options="reviewerCommentsOptions"
-              label="Reviewer"
-              style="width: 200px"
-              class="q-mb-md"
-              @update:model-value="updateReviewerComment"
-            />
-            <hr />
             <div class="q-mt-md">
               <div class="text-subtitle2 q-mb-xs">Client Answer</div>
               <q-editor
@@ -109,6 +94,22 @@
                 @update:model-value="updateClientAnswer"
               />
             </div>
+            <hr />
+
+            <div class="text-subtitle2 q-mb-xs">Reviewer Comment</div>
+            <div
+              v-if="selectedReviewerComment"
+              v-html="selectedReviewerComment.value"
+            ></div>
+
+            <q-select
+              v-model="selectedReviewerComment"
+              :options="reviewerCommentsOptions"
+              label="Reviewer"
+              style="width: 200px"
+              class="q-mb-md"
+              @update:model-value="updateReviewerComment"
+            />
 
             <div class="q-mt-md">
               <div class="q-mb-md">
