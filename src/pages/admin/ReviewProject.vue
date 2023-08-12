@@ -735,7 +735,118 @@ export default {
     });
 
     const status = ref("");
+    store.installActions([
+      {
+        id: "export",
+        label: "Export",
+        submenu: [
+          {
+            label: "With reviewer comments",
+            callback: () => {
+              const htmlString = flattenedNodes.value
+                .map((node) => {
+                  const selectedQuestionAnswers =
+                    questionToClientAnswers.value[node.id];
+                  const selectedQuestionComments =
+                    questionToReviewerComments.value[node.id];
 
+                  const latestAnswer =
+                    selectedQuestionAnswers &&
+                    selectedQuestionAnswers.length > 0
+                      ? selectedQuestionAnswers[
+                          selectedQuestionAnswers.length - 1
+                        ]
+                      : null;
+                  const latestResponse =
+                    selectedQuestionComments &&
+                    selectedQuestionComments.length > 0
+                      ? selectedQuestionComments[
+                          selectedQuestionComments.length - 1
+                        ]
+                      : null;
+
+                  return `
+                <div style="margin-bottom: 20px;">
+                  <div style="border: 1px solid #1976D2; padding: 0px; max-width: 50%;">
+                    <div style="background-color: #1976D2; color: #fff;">
+                      <h3 style="margin: 0; padding: 10px 10px 10px 20px;">${
+                        node.label
+                      }</h3>
+                    </div>
+                    <p style="margin-top: 10px; padding-left: 20px;">${
+                      node.description
+                    }</p>
+                  </div>
+                  <div style="padding-left: 20px;">
+                    <h4 style="margin-top: 20px;">Answer</h4>
+                    <p>${latestAnswer ? latestAnswer.value : "No answer"}</p>
+                    <hr />
+                    <h4 style="margin-top: 20px;">Comment</h4>
+                    <p>${latestResponse ? latestResponse.comment : ""}</p>
+                  </div>
+                </div>
+              `;
+                })
+                .join("");
+
+              const blob = new Blob([htmlString], { type: "text/html" });
+              const url = URL.createObjectURL(blob);
+
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = "export_with_comments.html";
+              link.click();
+            },
+          },
+          {
+            label: "Without reviewer comments",
+            callback: () => {
+              const htmlString = flattenedNodes.value
+                .map((node) => {
+                  const selectedQuestionAnswers =
+                    questionToClientAnswers.value[node.id];
+
+                  const latestAnswer =
+                    selectedQuestionAnswers &&
+                    selectedQuestionAnswers.length > 0
+                      ? selectedQuestionAnswers[
+                          selectedQuestionAnswers.length - 1
+                        ]
+                      : null;
+
+                  return `
+                <div style="margin-bottom: 20px;">
+                  <div style="border: 1px solid #1976D2; padding: 0px; max-width: 50%;">
+                    <div style="background-color: #1976D2; color: #fff;">
+                      <h2 style="margin: 0; padding: 10px 10px 10px 20px;">${
+                        node.label
+                      }</h2>
+                    </div>
+                    <p style="margin-top: 10px; padding-left: 20px;">${
+                      node.description
+                    }</p>
+                  </div>
+                  <div style="padding-left: 20px;">
+                    <h3 style="margin-top: 20px;">Answer</h3>
+                    <p>${latestAnswer ? latestAnswer.value : "No answer"}</p>
+                  </div>
+                </div>
+              `;
+                })
+                .join("");
+
+              const blob = new Blob([htmlString], { type: "text/html" });
+              const url = URL.createObjectURL(blob);
+
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = "export_without_comments.html";
+              link.click();
+            },
+          },
+        ],
+      },
+    ]);
     return {
       splitterModel,
       selected,
