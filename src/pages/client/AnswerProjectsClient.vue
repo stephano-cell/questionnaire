@@ -94,6 +94,16 @@
                 @update:model-value="updateClientAnswer"
               />
             </div>
+            <div class="q-mt-md">
+              <div class="q-mb-md">
+                <q-btn
+                  label="Submit"
+                  color="primary"
+                  @click="submit"
+                  class="q-mr-md"
+                />
+              </div>
+            </div>
             <hr />
 
             <div class="text-subtitle2 q-mb-xs">Reviewer Comment</div>
@@ -110,17 +120,6 @@
               class="q-mb-md"
               @update:model-value="updateReviewerComment"
             />
-
-            <div class="q-mt-md">
-              <div class="q-mb-md">
-                <q-btn
-                  label="Submit"
-                  color="primary"
-                  @click="submit"
-                  class="q-mr-md"
-                />
-              </div>
-            </div>
           </q-tab-panel>
         </q-tab-panels>
       </template>
