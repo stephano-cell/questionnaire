@@ -79,70 +79,34 @@
             </div>
             <br />
             <div
-              v-if="selectedClientAnswer"
-              v-html="selectedClientAnswer.value"
+              v-if="selectedReviewerComment"
+              v-html="selectedReviewerComment.value"
             ></div>
 
             <q-select
-              v-model="selectedClientAnswer"
-              :options="selectedQuestionAnswers"
-              label="Client"
+              v-model="selectedReviewerComment"
+              :options="reviewerCommentsOptions"
+              label="Reviewer"
               style="width: 200px"
               class="q-mb-md"
-              @update:model-value="updateClientAnswer"
+              @update:model-value="updateReviewerComment"
             />
             <hr />
             <div class="q-mt-md">
-              <div class="text-subtitle2 q-mb-xs">Reviewer Comment</div>
+              <div class="text-subtitle2 q-mb-xs">Client Answer</div>
               <q-editor
-                v-model="reviewerComment"
+                v-model="clientAnswer"
                 class="q-mb-md"
                 :dense="$q.screen.lt.md"
-                :toolbar="[
-                  ['bold', 'italic', 'strike', 'underline'],
-
-                  [
-                    {
-                      label: $q.lang.editor.fontSize,
-                      icon: $q.iconSet.editor.fontSize,
-                      fixedLabel: true,
-                      fixedIcon: true,
-                      list: 'no-icons',
-                      options: [
-                        'size-1',
-                        'size-2',
-                        'size-3',
-                        'size-4',
-                        'size-5',
-                        'size-6',
-                        'size-7',
-                      ],
-                    },
-                  ],
-                  [
-                    {
-                      label: $q.lang.editor.align,
-                      icon: $q.iconSet.editor.align,
-                      fixedLabel: true,
-                      list: 'only-icons',
-                      options: ['left', 'center', 'right', 'justify'],
-                    },
-                    'unordered',
-                    'ordered',
-                  ],
-
-                  ['undo', 'redo'],
-                  ['fullscreen'],
-                ]"
               />
 
               <q-select
-                v-model="selectedReviewerComment"
-                :options="reviewerCommentsOptions"
-                label="Reviewer"
+                v-model="selectedClientAnswer"
+                :options="clientAnswersOptions"
+                label="Client"
                 style="width: 200px"
                 class="q-mb-md"
-                @update:model-value="updateReviewerComment"
+                @update:model-value="updateClientAnswer"
               />
             </div>
 
@@ -187,6 +151,10 @@ export default {
     const splitterModel = ref(10);
     const selected = ref(null);
     const currentFilter = ref(null);
+    const clientAnswer = ref("");
+    const clientAnswers = ref([]);
+    const selectedClientAnswer = ref({ label: "", value: { label: "" } });
+
     const handleArrowKeys = (event) => {
       // Arrow up key
       if (event.keyCode === 38) {
@@ -240,6 +208,23 @@ export default {
     const selectedQuestionAnswers = computed(() => {
       return questionToClientAnswers.value[selected.value] || [];
     });
+    const clientAnswersOptions = computed(() => {
+      if (!selected.value) {
+        return [];
+      }
+
+      const selectedClientAnswers =
+        questionToClientAnswers.value[selected.value];
+      return selectedClientAnswers.map((answer) => ({
+        label: `${answer.userEmail} - ${
+          answer.timestamp
+            ? new Date(answer.timestamp).toLocaleString()
+            : "No Date"
+        }`,
+        value: answer.comment,
+      }));
+    });
+
     const questionToClientAnswers = computed(() => {
       const mapping = {};
       flattenedNodes.value.forEach((node) => {
@@ -263,12 +248,8 @@ export default {
       return mapping;
     });
 
-    const clientAnswer = ref("");
     const isLocked = ref(false);
     const isCompleted = ref(false);
-
-    const clientAnswers = ref([]);
-    const selectedClientAnswer = ref({});
 
     const groups = ref([]);
     const store = useAppStore();
@@ -344,6 +325,7 @@ export default {
       groups.value.forEach(traverse);
       return nodes;
     });
+
     const nextQuestion = () => {
       const currentIndex = filteredFlattenedNodes.value.findIndex(
         (node) => node.id === selected.value
@@ -358,15 +340,16 @@ export default {
       const selectedQuestion = flattenedNodes.value.find(
         (node) => node.id === selected.value // use id to find selected question
       );
-      const commentData = {
-        comment: reviewerComment.value,
+      const answerData = {
+        comment: clientAnswer.value,
         projectQuestionId: selectedQuestion.id, // Use the id from projectsQuestions
         userId: userId, // Use the actual user ID
       };
 
       store
-        .submitComment(commentData)
+        .submitAnswer(answerData)
         .then((result) => {
+          console.log("Submitted answer:", result);
           console.log("Comment submitted with ID:", result.id);
 
           // Fetch the latest reviewer comments from the server
@@ -375,7 +358,9 @@ export default {
             .then((comments) => {
               reviewerComments.value = comments;
             });
-
+          store.fetchProjectClientAnswers(projectId.value).then((answers) => {
+            clientAnswers.value = answers;
+          });
           nextQuestion();
         })
         .catch((error) => {
@@ -388,10 +373,11 @@ export default {
       reviewerComment.value = newVal.value; //
     };
 
-    const updateClientAnswer = (selectedObject) => {
-      selectedClientAnswer.value = selectedObject;
-      clientAnswer.value = selectedObject ? selectedObject.value : "";
+    const updateClientAnswer = (newVal) => {
+      selectedClientAnswer.value = newVal;
+      clientAnswer.value = newVal.value;
     };
+
     const filters = [
       { label: "Show All", value: "all" },
       { label: "Completed", value: "completed" },
@@ -559,7 +545,15 @@ export default {
       const selectedQuestion = flattenedNodes.value.find(
         (node) => node.id === newVal
       );
+      watch(selectedClientAnswer, (newVal) => {
+        clientAnswer.value = newVal.value;
+      });
+
       await fetchProjectSelectedQuestions();
+      console.log(
+        "Updated client answers on selection change:",
+        clientAnswers.value
+      );
       if (selectedQuestion) {
         isLocked.value = selectedQuestion.isLocked;
         isCompleted.value = selectedQuestion.isCompleted;
@@ -580,14 +574,17 @@ export default {
         reviewerComment.value = "";
         selectedReviewerComment.value = { label: "", value: "" };
       }
-      const selectedQuestionAnswers = questionToClientAnswers.value[newVal];
+
+      const selectedQuestionAnswers =
+        questionToClientAnswers.value[selected.value];
       if (selectedQuestionAnswers && selectedQuestionAnswers.length > 0) {
         const latestAnswer =
           selectedQuestionAnswers[selectedQuestionAnswers.length - 1];
-
         selectedClientAnswer.value = {
-          label: latestAnswer.label,
-          value: latestAnswer.value,
+          label: `${latestAnswer.userEmail} - ${new Date(
+            latestAnswer.timestamp
+          ).toLocaleString()}`,
+          value: latestAnswer.comment,
         };
       } else {
         selectedClientAnswer.value = { label: "", value: "" };
@@ -596,8 +593,25 @@ export default {
         "updated selectedClientAnswer.value:",
         selectedClientAnswer.value
       );
+      console.log("Selected Question ID:", newVal);
+      console.log("Available Answers:", selectedQuestionAnswers);
+      console.log("Latest Answer Value:", selectedClientAnswer.value);
+    });
+    watch(isLocked, async (newIsLocked) => {
+      if (selectedQuestion.value) {
+        store.lockQuestion(selectedQuestion.value.id, newIsLocked);
+        await fetchProjectSelectedQuestions();
+      }
+      await fetchProjectSelectedQuestions();
     });
 
+    watch(isCompleted, async (newIsComplete) => {
+      if (selectedQuestion.value) {
+        store.completeQuestion(selectedQuestion.value.id, newIsComplete);
+        await fetchProjectSelectedQuestions();
+      }
+      await fetchProjectSelectedQuestions();
+    });
     const reviewerCommentsOptions = computed(() => {
       if (!selected.value) {
         return [];
@@ -619,6 +633,7 @@ export default {
         fetchProjectSelectedQuestions();
         store.fetchProjectReviewerComments(projectId.value).then((comments) => {
           reviewerComments.value = comments;
+          console.log("Fetched reviewer comments:", reviewerComments.value);
 
           if (flattenedNodes.value.length > 0) {
             selected.value = flattenedNodes.value[0].label;
@@ -644,21 +659,19 @@ export default {
         store
           .fetchProjectClientAnswers(projectId.value)
           .then((clientAnswerData) => {
-            clientAnswers.value = clientAnswerData.map((answer) => ({
-              label: `${answer.userEmail} - ${new Date(
-                answer.timestamp
-              ).toLocaleString()}`,
-              value: answer.comment,
-              timestamp: answer.timestamp,
-              projectQuestionId: answer.projectQuestionId,
-            }));
+            clientAnswers.value = clientAnswerData;
 
             const selectedQuestionAnswers =
               questionToClientAnswers.value[selected.value];
             if (selectedQuestionAnswers && selectedQuestionAnswers.length > 0) {
               const latestAnswer =
                 selectedQuestionAnswers[selectedQuestionAnswers.length - 1];
-              selectedClientAnswer.value = latestAnswer;
+              selectedClientAnswer.value = {
+                label: `${latestAnswer.userEmail} - ${new Date(
+                  latestAnswer.timestamp
+                ).toLocaleString()}`,
+                value: latestAnswer.comment,
+              };
             } else {
               selectedClientAnswer.value = { label: "", value: "" };
             }
@@ -745,118 +758,6 @@ export default {
     });
 
     const status = ref("");
-    store.installActions([
-      {
-        id: "export",
-        label: "Export",
-        submenu: [
-          {
-            label: "With reviewer comments",
-            callback: () => {
-              const htmlString = flattenedNodes.value
-                .map((node) => {
-                  const selectedQuestionAnswers =
-                    questionToClientAnswers.value[node.id];
-                  const selectedQuestionComments =
-                    questionToReviewerComments.value[node.id];
-
-                  const latestAnswer =
-                    selectedQuestionAnswers &&
-                    selectedQuestionAnswers.length > 0
-                      ? selectedQuestionAnswers[
-                          selectedQuestionAnswers.length - 1
-                        ]
-                      : null;
-                  const latestResponse =
-                    selectedQuestionComments &&
-                    selectedQuestionComments.length > 0
-                      ? selectedQuestionComments[
-                          selectedQuestionComments.length - 1
-                        ]
-                      : null;
-
-                  return `
-                <div style="margin-bottom: 20px;">
-                  <div style="border: 1px solid #1976D2; padding: 0px; max-width: 50%;">
-                    <div style="background-color: #1976D2; color: #fff;">
-                      <h3 style="margin: 0; padding: 10px 10px 10px 20px;">${
-                        node.label
-                      }</h3>
-                    </div>
-                    <p style="margin-top: 10px; padding-left: 20px;">${
-                      node.description
-                    }</p>
-                  </div>
-                  <div style="padding-left: 20px;">
-                    <h4 style="margin-top: 20px;">Answer</h4>
-                    <p>${latestAnswer ? latestAnswer.value : "No answer"}</p>
-                    <hr />
-                    <h4 style="margin-top: 20px;">Comment</h4>
-                    <p>${latestResponse ? latestResponse.comment : ""}</p>
-                  </div>
-                </div>
-              `;
-                })
-                .join("");
-
-              const blob = new Blob([htmlString], { type: "text/html" });
-              const url = URL.createObjectURL(blob);
-
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = "export_with_comments.html";
-              link.click();
-            },
-          },
-          {
-            label: "Without reviewer comments",
-            callback: () => {
-              const htmlString = flattenedNodes.value
-                .map((node) => {
-                  const selectedQuestionAnswers =
-                    questionToClientAnswers.value[node.id];
-
-                  const latestAnswer =
-                    selectedQuestionAnswers &&
-                    selectedQuestionAnswers.length > 0
-                      ? selectedQuestionAnswers[
-                          selectedQuestionAnswers.length - 1
-                        ]
-                      : null;
-
-                  return `
-                <div style="margin-bottom: 20px;">
-                  <div style="border: 1px solid #1976D2; padding: 0px; max-width: 50%;">
-                    <div style="background-color: #1976D2; color: #fff;">
-                      <h2 style="margin: 0; padding: 10px 10px 10px 20px;">${
-                        node.label
-                      }</h2>
-                    </div>
-                    <p style="margin-top: 10px; padding-left: 20px;">${
-                      node.description
-                    }</p>
-                  </div>
-                  <div style="padding-left: 20px;">
-                    <h3 style="margin-top: 20px;">Answer</h3>
-                    <p>${latestAnswer ? latestAnswer.value : "No answer"}</p>
-                  </div>
-                </div>
-              `;
-                })
-                .join("");
-
-              const blob = new Blob([htmlString], { type: "text/html" });
-              const url = URL.createObjectURL(blob);
-
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = "export_without_comments.html";
-              link.click();
-            },
-          },
-        ],
-      },
-    ]);
 
     return {
       splitterModel,
@@ -888,6 +789,7 @@ export default {
       questionToReviewerComments,
       isLocked,
       isCompleted,
+      clientAnswersOptions,
       currentFilter,
       filters,
       dropdown,
