@@ -393,16 +393,46 @@ db.run(
 router.post("/projectsClientAnswers/new", (req, res) => {
   const { comment, projectQuestionId, userId } = req.body;
 
-  const commentId = uuidv4(); // Generate a new ID for the comment
-
-  db.run(
-    `INSERT INTO projectsClientAnswers(id, comment, projectQuestionId, userId) VALUES(?, ?, ?, ?)`,
-    [commentId, comment, projectQuestionId, userId],
-    function (err) {
+  // Check if the question is locked
+  db.get(
+    `SELECT isLocked FROM projectsQuestions WHERE id = ?`,
+    [projectQuestionId],
+    (err, row) => {
       if (err) {
         return res.status(400).json({ error: err.message });
       }
-      return res.status(201).json({ id: commentId });
+
+      // If the question is locked (isLocked = 1), prevent submission
+      if (row && row.isLocked === 1) {
+        return res
+          .status(403)
+          .json({ error: "Question is locked and cannot be answered." });
+      }
+
+      // If the question is not locked, proceed with inserting the answer
+      const commentId = uuidv4(); // Generate a new ID for the comment
+
+      db.run(
+        `INSERT INTO projectsClientAnswers(id, comment, projectQuestionId, userId) VALUES(?, ?, ?, ?)`,
+        [commentId, comment, projectQuestionId, userId],
+        function (err) {
+          if (err) {
+            return res.status(400).json({ error: err.message });
+          }
+
+          // Update the isLocked value for the question after successful answer insertion
+          db.run(
+            `UPDATE projectsQuestions SET isLocked = 1 WHERE id = ?`,
+            [projectQuestionId],
+            function (err) {
+              if (err) {
+                return res.status(400).json({ error: err.message });
+              }
+              return res.status(201).json({ id: commentId });
+            }
+          );
+        }
+      );
     }
   );
 });

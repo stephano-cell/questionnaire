@@ -387,7 +387,7 @@ export default {
         .then((result) => {
           console.log("Submitted answer:", result);
           console.log("Comment submitted with ID:", result.id);
-
+          isLocked.value = true;
           // Fetch the latest reviewer comments from the server
           store
             .fetchProjectReviewerComments(projectId.value)
