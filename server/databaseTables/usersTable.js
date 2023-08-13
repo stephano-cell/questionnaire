@@ -107,6 +107,7 @@ router.put("/users/:id", (req, res) => {
 });
 
 // Login route
+// Login route
 router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -119,6 +120,11 @@ router.post("/login", (req, res) => {
     // If the user doesn't exist or the password is incorrect, return a 401 Unauthorized status
     if (!user || !bcrypt.compareSync(password, user.password)) {
       return res.status(401).json({ error: "Invalid username or password" });
+    }
+
+    // Check if the user is a client and if their allowLogin is set to no
+    if (user.role === "client" && user.allowLogin === 0) {
+      return res.status(401).json({ error: "Login not allowed for this user" });
     }
 
     // If the login is successful, generate a token for the session
