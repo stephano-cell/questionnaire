@@ -6,8 +6,13 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const crypto = require("crypto");
+const rateLimit = require("express-rate-limit");
+// Set up rate limiter: maximum of five requests per minute
+
 const secretKey = crypto.randomBytes(64).toString("hex");
 router.use(bodyParser.json());
+// Apply rate limiter to login route
+
 router.use(bodyParser.urlencoded({ extended: true }));
 // Open a database handle
 let db = new sqlite3.Database("./database.db", (err) => {
@@ -107,7 +112,12 @@ router.put("/users/:id", (req, res) => {
 });
 
 // Login route
-// Login route
+const loginLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 3, // limit each IP to 5 requests per windowMs
+  message: "Too many login attempts from this IP, please try again later.",
+});
+router.use("/login", loginLimiter);
 router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
