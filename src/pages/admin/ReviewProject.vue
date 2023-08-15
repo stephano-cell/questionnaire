@@ -74,6 +74,7 @@
                 <p
                   style="margin-top: 10px; padding-left: 10px"
                   v-html="node.description"
+                  class="description-content"
                 ></p>
               </div>
             </div>
@@ -81,6 +82,7 @@
             <div
               v-if="selectedClientAnswer"
               v-html="selectedClientAnswer.value"
+              class="description-content"
             ></div>
 
             <q-select
@@ -96,7 +98,7 @@
               <div class="text-subtitle2 q-mb-xs">Reviewer Comment</div>
               <q-editor
                 v-model="reviewerComment"
-                class="q-mb-md"
+                class="description-content"
                 :dense="$q.screen.lt.md"
                 :toolbar="[
                   ['bold', 'italic', 'strike', 'underline'],
@@ -924,3 +926,9 @@ export default {
   },
 };
 </script>
+<style>
+.description-content img {
+  max-width: 500px;
+  height: auto;
+}
+</style>

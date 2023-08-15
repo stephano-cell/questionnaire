@@ -53,7 +53,7 @@
             :name="node.id"
           >
             <div class="text-h4 q-mb-md">{{ node.label }}</div>
-            <p v-html="node.description"></p>
+            <p v-html="node.description" class="description-content"></p>
           </q-tab-panel>
         </q-tab-panels>
       </template>
@@ -111,6 +111,7 @@
             label="New Question Title"
           />
           <q-editor
+            class="description-content"
             filled
             v-model="newQuestionDescription"
             label="New Question Description"
@@ -193,6 +194,7 @@
           />
 
           <q-editor
+            class="description-content"
             filled
             v-model="questionDescription"
             label="Question Description"
@@ -732,3 +734,9 @@ export default {
   },
 };
 </script>
+<style>
+.description-content img {
+  max-width: 500px;
+  height: auto;
+}
+</style>
