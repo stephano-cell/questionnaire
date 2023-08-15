@@ -12,24 +12,25 @@
       label="Template Description"
       class="q-ma-md"
     />
+    <q-btn
+      label="Create Group"
+      color="primary"
+      @click="showCreateGroupDialog = true"
+      class="q-ma-md q-mb-ml"
+    />
+
+    <q-btn
+      label="Create Question"
+      color="secondary"
+      @click="showCreateQuestionDialog = true"
+      class="q-ma-md q-mb-ml"
+    />
+    <q-input filled v-model="searchTerm" label="Search" class="q-ma-md" />
     <q-splitter v-model="splitterModel" style="height: 600px">
       <template v-slot:before>
         <div class="q-pa-md">
-          <q-btn
-            label="Create Group"
-            color="primary"
-            @click="showCreateGroupDialog = true"
-            class="q-ma-md q-mb-ml"
-          />
-
-          <q-btn
-            label="Create Question"
-            color="secondary"
-            @click="showCreateQuestionDialog = true"
-            class="q-ma-md q-mb-ml"
-          />
           <q-tree
-            :nodes="groups"
+            :nodes="filteredGroups"
             node-key="id"
             selected-color="primary"
             v-model:selected="selected"
@@ -309,6 +310,7 @@ export default {
     const deletedGroups = ref([]);
     const deletedQuestions = ref([]);
     const templateDescription = ref("");
+    const searchTerm = ref("");
     const selectedNodeId = computed(() => {
       const node = flattenedNodes.value.find(
         (node) => node.id === selected.value
@@ -347,6 +349,22 @@ export default {
         }
       }
     };
+    const filteredGroups = computed(() => {
+      if (searchTerm.value) {
+        return tempGroups.value
+          .map((group) => {
+            const filteredChildren = group.children.filter((child) =>
+              child.label.toLowerCase().includes(searchTerm.value.toLowerCase())
+            );
+            if (filteredChildren.length > 0) {
+              return { ...group, children: filteredChildren };
+            }
+            return null;
+          })
+          .filter(Boolean);
+      }
+      return tempGroups.value;
+    });
 
     const showCreateGroupDialog = ref(false);
     const showCreateQuestionDialog = ref(false);
@@ -708,6 +726,8 @@ export default {
       templateId,
       deletedGroups,
       deletedQuestions,
+      searchTerm,
+      filteredGroups,
     };
   },
 };
