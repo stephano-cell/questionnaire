@@ -149,6 +149,7 @@
 
               ['undo', 'redo'],
               ['fullscreen'],
+              ['viewsource'],
             ]"
           />
         </q-card-section>
@@ -230,6 +231,7 @@
 
               ['undo', 'redo'],
               ['fullscreen'],
+              ['viewsource'],
             ]"
           />
         </q-card-section>
