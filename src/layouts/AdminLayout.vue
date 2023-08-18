@@ -33,7 +33,7 @@
         </q-btn>
 
         <q-toolbar-title style="flex-grow: 1; text-align: center"
-          >VUestionnaire</q-toolbar-title
+          >Questionnnaire</q-toolbar-title
         >
         <q-btn
           outline

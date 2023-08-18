@@ -4,7 +4,7 @@
       <q-toolbar style="display: flex">
         <q-btn outline style="visibility: hidden">Logout</q-btn>
         <q-toolbar-title style="flex-grow: 1; text-align: center"
-          >VUestionnaire</q-toolbar-title
+          >Questionnnaire</q-toolbar-title
         >
         <q-btn
           outline
