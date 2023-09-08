@@ -176,6 +176,48 @@ export default {
 
       router.back(); // Navigate back after creating project and project questions
     };
+    const cloneProject = async () => {
+      // Clone project data from the existing project
+      if (!projectDetails.value) {
+        console.error("Project details are not available");
+        return;
+      }
+
+      // Clone project data from the existing project
+      const projectData = {
+        name: projectName.value,
+        company: company.value,
+        comment: comment.value,
+        templateId: projectDetails.value.templateId, // Assuming projectDetails contains templateId
+      };
+
+      // Generate a new UUID for the cloned project
+      const newUUID = uuidv4();
+      projectData.id = newUUID;
+
+      // Create the new (cloned) project
+      const newProject = await store.createProject(projectData);
+
+      // Filter out the groups from the flattened nodes
+      const questions = flattenedNodes.value.filter(
+        (node) => node.children === undefined
+      );
+
+      // For each question, create a new entry in the projectsQuestions table
+      for (const question of questions) {
+        const projectQuestionData = {
+          isTicked: ticked.value.includes(question.id), // Use isTicked value from question
+          isLocked: false, // False by default, change if needed
+          isCompleted: false, // False by default, change if needed
+          templateQuestionId: question.id,
+          projectId: newProject.id,
+        };
+        await store.createProjectQuestion(projectQuestionData);
+      }
+
+      router.back(); // Navigate back after cloning the project and project questions
+    };
+
     const updateProject = async () => {
       const updatedProject = {
         name: projectName.value,
@@ -224,6 +266,7 @@ export default {
           comment.value = project.comment;
         });
         store.fetchProjectDetails(projectId.value).then((details) => {
+          projectDetails.value = details[0];
           // Transform the project details into the format expected by the q-tree component
           const groupedDetails = groupBy(details, "groupId");
           groups.value = Object.values(groupedDetails).map((groupDetails) => ({
@@ -252,9 +295,7 @@ export default {
           },
           {
             label: "CLONE",
-            callback: () => {
-              router.back();
-            },
+            callback: cloneProject,
           },
         ]);
       }
