@@ -40,7 +40,14 @@
         <div class="q-pa-md">
           <q-tree
             v-if="filteredGroups.length"
-            :nodes="filteredGroups"
+            :nodes="
+              filteredGroups.map((group) => ({
+                ...group,
+                label: `${group.label} (${groupPendingCounts[group.label]}/${
+                  group.children.length
+                })`,
+              }))
+            "
             node-key="id"
             selected-color="primary"
             v-model:selected="selected"
@@ -192,6 +199,53 @@ export default {
     const clientAnswer = ref("");
     const clientAnswers = ref([]);
     const selectedClientAnswer = ref({ label: "", value: { label: "" } });
+
+    const groupPendingCounts = computed(() => {
+      const counts = {};
+
+      // Iterate through each group
+      groups.value.forEach((group) => {
+        let clientPendingCount = 0;
+
+        // Total number of questions in the group
+        const totalCount = group.children.length;
+
+        // Iterate through each node (question) in the group
+        group.children.forEach((node) => {
+          const selectedQuestionAnswers =
+            questionToClientAnswers.value[node.id];
+          const selectedQuestionComments =
+            questionToReviewerComments.value[node.id];
+
+          // Get the latest answer and response
+          const latestAnswer =
+            selectedQuestionAnswers && selectedQuestionAnswers.length > 0
+              ? selectedQuestionAnswers[selectedQuestionAnswers.length - 1]
+              : null;
+          const latestResponse =
+            selectedQuestionComments && selectedQuestionComments.length > 0
+              ? selectedQuestionComments[selectedQuestionComments.length - 1]
+              : null;
+
+          // Check if the answer timestamp is greater than the response timestamp, or there is no client answer, and the question is not completed
+          if (
+            (latestAnswer === null ||
+              (latestAnswer &&
+                latestResponse &&
+                new Date(latestAnswer.timestamp) <
+                  new Date(latestResponse.timestamp))) &&
+            node.isCompleted != 1
+          ) {
+            clientPendingCount++;
+          }
+        });
+
+        // Store the count of questions where the client needs to answer for this group
+        counts[group.label] = totalCount - clientPendingCount; // Subtracting clientPendingCount from totalCount
+      });
+
+      return counts;
+    });
 
     const handleArrowKeys = (event) => {
       // Arrow up key
@@ -813,6 +867,7 @@ export default {
       selectedQuestionAnswers,
       selectedClientAnswer,
       submit,
+      groupPendingCounts,
       nextQuestion,
       updateReviewerComment,
       updateClientAnswer,
