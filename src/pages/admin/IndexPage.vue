@@ -8,7 +8,7 @@
           size="20em"
           @click="adminUserList"
         />
-        Clients
+        Users
       </q-tab>
       <q-tab name="projects"
         ><q-icon

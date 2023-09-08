@@ -49,10 +49,13 @@ export default defineComponent({
           console.log("Redirect to " + dest);
 
           // Redirect based on the user's role
+          // Existing code
           if (store.auth.type == "admin") {
             router.replace(dest ?? "/admin/");
           } else if (store.auth.type == "client") {
             router.replace(dest ?? "/session/");
+          } else if (store.auth.type == "reviewer") {
+            router.replace(dest ?? "/admin/project/list/");
           }
         } else {
           console.error("Failed to authenticate");

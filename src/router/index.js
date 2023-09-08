@@ -39,12 +39,19 @@ export default route(function (/* { store, ssrContext } */) {
   Router.beforeEach((to, from, next) => {
     const store = useAppStore();
     store.installActions();
+
     if (
-      (to.path.startsWith("/admin") && store.authenticated?.type !== "admin") ||
+      (to.path.startsWith("/admin") &&
+        !to.path.startsWith("/admin/project") &&
+        store.authenticated?.type !== "admin") ||
+      (to.path.startsWith("/admin/project") &&
+        !["admin", "reviewer"].includes(store.authenticated?.type)) ||
       (to.name !== "login" && !store.authenticated)
-    )
+    ) {
       next({ name: "login", query: { redirect: to.path } });
-    else next();
+    } else {
+      next();
+    }
   });
 
   return Router;

@@ -15,7 +15,10 @@ const routes = [
     beforeEnter: (to, from, next) => {
       // Check if the user is authenticated and is an admin
       const store = useAppStore();
-      if (store.authenticated && store.auth.type === "admin") {
+      if (
+        store.authenticated &&
+        (store.auth.type === "admin" || store.auth.type === "reviewer")
+      ) {
         next();
       } else {
         // Redirect to the login page if the user is not an admin
