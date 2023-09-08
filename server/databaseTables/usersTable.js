@@ -25,15 +25,17 @@ db.run("PRAGMA foreign_keys = ON");
 // Create the users table
 db.run(
   `CREATE TABLE IF NOT EXISTS users(
-  id TEXT PRIMARY KEY,
-  username TEXT UNIQUE,
-  fullName TEXT,
-  email TEXT UNIQUE,
-  companyName TEXT,
-  password TEXT,
-  role TEXT,
-  allowLogin INTEGER
-)`,
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE,
+    fullName TEXT,
+    email TEXT UNIQUE,
+    companyName TEXT,
+    password TEXT,
+    role TEXT,
+    allowLogin INTEGER,
+    failedLoginAttempts INTEGER DEFAULT 0
+  )`,
+  
   (err) => {
     if (err) {
       return console.log(err.message);
@@ -129,8 +131,33 @@ router.post("/login", (req, res) => {
 
     // If the user doesn't exist or the password is incorrect, return a 401 Unauthorized status
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      return res.status(401).json({ error: "Invalid username or password" });
+      // Increment the failed login counter and update it in the database
+      db.run(
+        "UPDATE users SET failedLoginAttempts = failedLoginAttempts + 1 WHERE username = ?",
+        [username],
+        function (updateErr) {
+          if (updateErr) {
+            return res.status(400).json({ error: updateErr.message });
+          }
+          // Check if failed login attempts have reached the limit (3)
+          if (user && user.failedLoginAttempts + 1 >= 3) {
+            // Set 'allowLogin' to 0
+            db.run(
+              "UPDATE users SET allowLogin = 0 WHERE username = ?",
+              [username]
+            );
+          }
+          return res.status(401).json({ error: "Invalid username or password" });
+        }
+      );
+      return;
     }
+
+    // Reset the failed login counter to 0 upon successful login
+    db.run(
+      "UPDATE users SET failedLoginAttempts = 0 WHERE username = ?",
+      [username]
+    );
 
     // Check if the user is a client and if their allowLogin is set to no
     if (user.role === "client" && user.allowLogin === 0) {
