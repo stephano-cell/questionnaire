@@ -199,7 +199,7 @@ import {
 } from "vue";
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
-import { toolbarConfig, fontsConfig } from "../../layouts/editorConfig";
+import { toolbarConfig, fontsConfig } from "../../components/editorConfig";
 
 export default {
   props: {
