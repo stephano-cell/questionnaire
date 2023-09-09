@@ -107,7 +107,7 @@
                 round
                 dense
                 size="sm"
-                icon="table_chart"
+                icon="grid_on"
                 @click="dialog = true"
               />
               <q-editor
