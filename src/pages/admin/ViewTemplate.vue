@@ -116,43 +116,8 @@
             v-model="newQuestionDescription"
             label="New Question Description"
             :dense="$q.screen.lt.md"
-            :toolbar="[
-              ['bold', 'italic', 'strike', 'underline'],
-
-              [
-                {
-                  label: $q.lang.editor.fontSize,
-                  icon: $q.iconSet.editor.fontSize,
-                  fixedLabel: true,
-                  fixedIcon: true,
-                  list: 'no-icons',
-                  options: [
-                    'size-1',
-                    'size-2',
-                    'size-3',
-                    'size-4',
-                    'size-5',
-                    'size-6',
-                    'size-7',
-                  ],
-                },
-              ],
-              [
-                {
-                  label: $q.lang.editor.align,
-                  icon: $q.iconSet.editor.align,
-                  fixedLabel: true,
-                  list: 'only-icons',
-                  options: ['left', 'center', 'right', 'justify'],
-                },
-                'unordered',
-                'ordered',
-              ],
-
-              ['undo', 'redo'],
-              ['fullscreen'],
-              ['viewsource'],
-            ]"
+            :toolbar="toolbarConfig"
+            :fonts="fontsConfig"
           />
         </q-card-section>
         <q-card-actions align="right">
@@ -199,43 +164,8 @@
             v-model="questionDescription"
             label="Question Description"
             :dense="$q.screen.lt.md"
-            :toolbar="[
-              ['bold', 'italic', 'strike', 'underline'],
-
-              [
-                {
-                  label: $q.lang.editor.fontSize,
-                  icon: $q.iconSet.editor.fontSize,
-                  fixedLabel: true,
-                  fixedIcon: true,
-                  list: 'no-icons',
-                  options: [
-                    'size-1',
-                    'size-2',
-                    'size-3',
-                    'size-4',
-                    'size-5',
-                    'size-6',
-                    'size-7',
-                  ],
-                },
-              ],
-              [
-                {
-                  label: $q.lang.editor.align,
-                  icon: $q.iconSet.editor.align,
-                  fixedLabel: true,
-                  list: 'only-icons',
-                  options: ['left', 'center', 'right', 'justify'],
-                },
-                'unordered',
-                'ordered',
-              ],
-
-              ['undo', 'redo'],
-              ['fullscreen'],
-              ['viewsource'],
-            ]"
+            :toolbar="toolbarConfig"
+            :fonts="fontsConfig"
           />
         </q-card-section>
         <q-card-actions align="right">
@@ -290,6 +220,7 @@ import { ref, computed, onMounted } from "vue";
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
 import { v4 } from "uuid";
+import { toolbarConfig, fontsConfig } from "../../components/editorConfig";
 
 export default {
   props: {
@@ -730,6 +661,8 @@ export default {
       deletedQuestions,
       searchTerm,
       filteredGroups,
+      fontsConfig,
+      toolbarConfig,
     };
   },
 };
