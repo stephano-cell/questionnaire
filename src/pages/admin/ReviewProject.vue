@@ -101,48 +101,54 @@
             <hr />
             <div class="q-mt-md">
               <div class="text-subtitle2 q-mb-xs">Reviewer Comment</div>
+
+              <q-btn
+                flat
+                round
+                dense
+                size="sm"
+                icon="table_chart"
+                @click="dialog = true"
+              />
               <q-editor
                 v-model="reviewerComment"
-                class="description-content"
+                class="q-mb-md"
                 :dense="$q.screen.lt.md"
-                :toolbar="[
-                  ['bold', 'italic', 'strike', 'underline'],
+                :toolbar="toolbarConfig"
+                :fonts="fontsConfig"
+              >
+              </q-editor>
 
-                  [
-                    {
-                      label: $q.lang.editor.fontSize,
-                      icon: $q.iconSet.editor.fontSize,
-                      fixedLabel: true,
-                      fixedIcon: true,
-                      list: 'no-icons',
-                      options: [
-                        'size-1',
-                        'size-2',
-                        'size-3',
-                        'size-4',
-                        'size-5',
-                        'size-6',
-                        'size-7',
-                      ],
-                    },
-                  ],
-                  [
-                    {
-                      label: $q.lang.editor.align,
-                      icon: $q.iconSet.editor.align,
-                      fixedLabel: true,
-                      list: 'only-icons',
-                      options: ['left', 'center', 'right', 'justify'],
-                    },
-                    'unordered',
-                    'ordered',
-                  ],
-
-                  ['undo', 'redo'],
-                  ['fullscreen'],
-                ]"
-              />
-
+              <q-dialog v-model="dialog">
+                <q-card>
+                  <q-card-section>
+                    <div class="text-h6">Insert Table</div>
+                  </q-card-section>
+                  <q-card-section>
+                    <q-input
+                      filled
+                      v-model="tableRows"
+                      type="number"
+                      label="Rows"
+                    />
+                    <q-input
+                      filled
+                      v-model="tableCols"
+                      type="number"
+                      label="Columns"
+                    />
+                  </q-card-section>
+                  <q-card-actions align="right">
+                    <q-btn flat label="Cancel" color="primary" v-close-popup />
+                    <q-btn
+                      flat
+                      label="Insert"
+                      color="primary"
+                      @click="insertTable"
+                    />
+                  </q-card-actions>
+                </q-card>
+              </q-dialog>
               <q-select
                 v-model="selectedReviewerComment"
                 :options="reviewerCommentsOptions"
@@ -193,6 +199,7 @@ import {
 } from "vue";
 import { useAppStore } from "../../stores/appStore";
 import { useRouter } from "vue-router";
+import { toolbarConfig, fontsConfig } from "../../layouts/editorConfig";
 
 export default {
   props: {
@@ -206,6 +213,22 @@ export default {
     const splitterModel = ref(15);
     const selected = ref(null);
     const currentFilter = ref(null);
+    const dialog = ref(false);
+    const tableRows = ref(0);
+    const tableCols = ref(0);
+    const insertTable = () => {
+      let table = "<table>";
+      for (let i = 0; i < tableRows.value; i++) {
+        table += "<tr>";
+        for (let j = 0; j < tableCols.value; j++) {
+          table += "<td>&nbsp;</td>"; // Add a non-breaking space inside the cell to ensure it has content
+        }
+        table += "</tr>";
+      }
+      table += "</table>";
+      reviewerComment.value += table;
+      dialog.value = false;
+    };
     const handleArrowKeys = (event) => {
       // Arrow up key
       if (event.keyCode === 38) {
@@ -927,6 +950,14 @@ export default {
       handleArrowKeys,
       prevQuestion,
       onBeforeUnmount,
+      toolbarConfig,
+      fontsConfig,
+
+      insertTable,
+      dialog,
+      tableRows,
+      tableCols,
+      toolbar,
     };
   },
 };
@@ -935,5 +966,16 @@ export default {
 .description-content img {
   max-width: 500px;
   height: auto;
+}
+</style>
+<style scoped>
+.q-editor::v-deep .q-editor__content table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.q-editor::v-deep .q-editor__content table td {
+  border: 1px solid black;
+  padding: 10px;
 }
 </style>
